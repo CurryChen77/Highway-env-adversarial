@@ -1,6 +1,7 @@
 # -*-coding: utf-8 -*-
 # written by chenkeyu
-from highway_env.envs.highway_env_adv import *  # Environment
+import gymnasium as gym
+from gymnasium.wrappers import RecordVideo
 from collections import namedtuple
 
 Action = namedtuple("Action", ["ego_action", "bv_action"])
@@ -20,14 +21,16 @@ if __name__ == '__main__':
     MAX_TRAIN_ITERS = 1000
 
     # create the environment
-    env = HighwayEnvAdv()
+    env = gym.make("highway-adv-v0", render_mode="rgb_array")
     env.configure({
         "lanes_count": 2,  # the number of the lane
         "vehicles_count": 2,  # the number of background vehicle
         "duration": 6,  # [s]
-        "other_vehicles_type": "highway_env.vehicle.behavior.AdvVehicle"
+        "other_vehicles_type": "highway_env.vehicle.behavior.AdvVehicle"  # change the bv behavior
     })
     obs, info = env.reset()
+    env = RecordVideo(env, video_folder="highway_adv/videos", episode_trigger=lambda e: True)
+    env.unwrapped.set_record_video_wrapper(env)
 
     # load the trained ego agent
     ego_model = load_ego_agent()  # TODO

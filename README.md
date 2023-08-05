@@ -8,5 +8,7 @@ But the reward is still the reward for the ego agent, based on the ego_action
 ## bv behavior type: AdvVehicle
 receive the bv_action (tuple) from the bv_model, and add the tiny changes to original IMDVehicle (adv_acc, adv_steering)
 
-## main
-1. still need the specific model for the ego agent and the bv agent
+## TODO
+1. specify the ego agent model (pretrained)
+2. specify the bv agent model (model need training)
+3. specify the create_vehicles function in the AdvEnv
