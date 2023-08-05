@@ -14,7 +14,7 @@ from highway_env.vehicle.controller import MDPVehicle
 if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
 
-Action = Union[int, np.ndarray]
+Action = Union[int, np.ndarray, tuple]
 
 
 class ActionType(object):
@@ -237,7 +237,7 @@ class DiscreteMetaAction(ActionType):
         return functools.partial(MDPVehicle, target_speeds=self.target_speeds)
 
     def act(self, action: Union[int, np.ndarray]) -> None:
-        self.controlled_vehicle.act(self.actions[int(action)])
+        self.controlled_vehicle.act(self.actions[int(action)])  # for now the controlled vehicle is MDPVehicle type
 
     def get_available_actions(self) -> List[int]:
         """

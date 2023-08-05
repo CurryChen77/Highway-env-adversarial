@@ -233,12 +233,14 @@ class AbstractEnv(gym.Env):
 
         self.time += 1 / self.config["policy_frequency"]
         self._simulate(action)
+        # ego action
+        ego_action = action.ego_action
 
         obs = self.observation_type.observe()
-        reward = self._reward(action)
+        reward = self._reward(ego_action)  # need ego action to get the reward
         terminated = self._is_terminated()
         truncated = self._is_truncated()
-        info = self._info(obs, action)
+        info = self._info(obs, ego_action)  # need ego action to get the info
         if self.render_mode == 'human':
             self.render()
 
@@ -247,14 +249,16 @@ class AbstractEnv(gym.Env):
     def _simulate(self, action: Optional[Action] = None) -> None:
         """Perform several steps of simulation with constant action."""
         frames = int(self.config["simulation_frequency"] // self.config["policy_frequency"])
+        ego_action = action.ego_action
+        bv_action = action.bv_action
         for frame in range(frames):
-            # Forward action to the vehicle
-            if action is not None \
+            # Forward action to the ego vehicle
+            if ego_action is not None \
                     and not self.config["manual_control"] \
                     and self.steps % int(self.config["simulation_frequency"] // self.config["policy_frequency"]) == 0:
-                self.action_type.act(action)
+                self.action_type.act(ego_action)  # self.controlled_vehicle.act() -> MDPVehicle.act(ego_action)
 
-            self.road.act()
+            self.road.act(bv_action)  # self.road.vehicle.act() -> IDMVehicle.act() (for now)
             self.road.step(1 / self.config["simulation_frequency"])
             self.steps += 1
 

@@ -67,20 +67,24 @@ class HighwayEnvAdv(HighwayEnv):
 
         self.controlled_vehicles = []
         for others in other_per_controlled:
+            # create the ego vehicle
             vehicle = Vehicle.create_random(
                 self.road,
                 speed=25,
                 lane_id=self.config["initial_lane_id"],
                 spacing=self.config["ego_spacing"]
             )
+            # the type of ego vehicle is MDPVehicle
             vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
-            self.controlled_vehicles.append(vehicle)
-            self.road.vehicles.append(vehicle)
+            self.controlled_vehicles.append(vehicle)  # the ego vehicle -> type: MDPVehicle
+            self.road.vehicles.append(vehicle)  # all of the vehicle on the road -> type:IDMVehicle(for now)
 
+            # create the rest vehicle
             for _ in range(others):
+                # still using Vehicle.create_random to create the bv
                 vehicle = other_vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"])
                 vehicle.randomize_behavior()
-                self.road.vehicles.append(vehicle)
+                self.road.vehicles.append(vehicle)  # create the other vehicle on the road except ego car
 
     def _reward(self, action: Action) -> float:
         """
@@ -122,7 +126,7 @@ class HighwayEnvAdv(HighwayEnv):
         return self.time >= self.config["duration"]
 
 
-class HighwayEnvFast(HighwayEnv):
+class HighwayEnvAdvFast(HighwayEnvAdv):
     """
     A variant of highway-v0 with faster execution:
         - lower simulation frequency
