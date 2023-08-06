@@ -3,6 +3,7 @@ from typing import Dict, Text
 import numpy as np
 
 from highway_env import utils
+from typing import Optional
 from highway_env.envs.highway_env import HighwayEnv
 from highway_env.envs.common.abstract import AbstractEnv
 from highway_env.envs.common.action import Action
@@ -51,40 +52,61 @@ class HighwayEnvAdv(HighwayEnv):
         })
         return config
 
-    def _reset(self) -> None:
-        self._create_road()
-        self._create_vehicles()
-
-    def _create_road(self) -> None:
-        """Create a road composed of straight adjacent lanes."""
-        self.road = Road(network=RoadNetwork.straight_road_network(self.config["lanes_count"], speed_limit=30),
-                         np_random=self.np_random, record_history=self.config["show_trajectories"])
-
     def _create_vehicles(self) -> None:
         """Create some new random vehicles of a given type, and add them on the road."""
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
         other_per_controlled = near_split(self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"])
 
         self.controlled_vehicles = []
-        for others in other_per_controlled:
-            # create the ego vehicle
-            vehicle = Vehicle.create_random(
-                self.road,
-                speed=25,
-                lane_id=self.config["initial_lane_id"],
-                spacing=self.config["ego_spacing"]
-            )
-            # the type of ego vehicle is MDPVehicle
-            vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
-            self.controlled_vehicles.append(vehicle)  # the ego vehicle -> type: MDPVehicle
-            self.road.vehicles.append(vehicle)  # all of the vehicle on the road -> type:IDMVehicle(for now)
-
-            # create the rest vehicle
-            for _ in range(others):
-                # still using Vehicle.create_random to create the bv
+        for i, others in enumerate(other_per_controlled):
+            if i == 0:  # the first controlled vehicle
+                # create the ego vehicle (the first vehicle)
+                vehicle = Vehicle.create_random(
+                    self.road,
+                    speed=25,
+                    lane_id=self.config["initial_lane_id"],
+                    spacing=self.config["ego_spacing"]
+                )
+                # the type of ego vehicle is MDPVehicle
+                vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+            else:
+                # Create the bv (the rest vehicle)  other_vehicle_type -> AdvVehicle
                 vehicle = other_vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"])
                 vehicle.randomize_behavior()
-                self.road.vehicles.append(vehicle)  # create the other vehicle on the road except ego car
+            self.controlled_vehicles.append(vehicle)  # contain all the vehicle
+            self.road.vehicles.append(vehicle)
+
+    def _simulate(self, action: Optional[Action] = None) -> None:
+        """Perform several steps of simulation with constant action."""
+        frames = int(self.config["simulation_frequency"] // self.config["policy_frequency"])
+        if type(action) == tuple:
+            ego_action = action.ego_action
+            bv_action_list = action.bv_action_list
+        else:
+            ego_action = action
+            bv_action_list = None
+        for frame in range(frames):
+            # Forward action to the ego vehicle
+            if ego_action is not None \
+                    and not self.config["manual_control"] \
+                    and self.steps % int(self.config["simulation_frequency"] // self.config["policy_frequency"]) == 0:
+                self.action_type.act(ego_action)  # self.controlled_vehicle.act() -> MDPVehicle.act(ego_action)
+
+            if bv_action_list:  # bv_action is a list [str, str]
+                for i in range(len(self.controlled_vehicles)-1):
+                    # skip the first controlled_vehicle(ego), then the rest is the bv
+                    self.controlled_vehicles[i+1].act(bv_action_list[i])  # AdvVehicle.act
+            else:
+                self.road.act()  # self.road.vehicle.act() -> IDMVehicle.act()
+            self.road.step(1 / self.config["simulation_frequency"])
+            self.steps += 1
+
+            # Automatically render intermediate simulation steps if a viewer has been launched
+            # Ignored if the rendering is done offscreen
+            if frame < frames - 1:  # Last frame will be rendered through env.render() as usual
+                self._automatic_rendering()
+
+        self.enable_auto_render = False
 
     def _reward(self, action: Action) -> float:
         """
@@ -103,6 +125,7 @@ class HighwayEnvAdv(HighwayEnv):
         return reward
 
     def _rewards(self, action: Action) -> Dict[Text, float]:
+        # self.vehicle is the first vehicle in controlled_vehicle -> ego vehicle
         neighbours = self.road.network.all_side_lanes(self.vehicle.lane_index)
         lane = self.vehicle.target_lane_index[2] if isinstance(self.vehicle, ControlledVehicle) \
             else self.vehicle.lane_index[2]
@@ -124,7 +147,6 @@ class HighwayEnvAdv(HighwayEnv):
     def _is_truncated(self) -> bool:
         """The episode is truncated if the time limit is reached."""
         return self.time >= self.config["duration"]
-
 
 class HighwayEnvAdvFast(HighwayEnvAdv):
     """

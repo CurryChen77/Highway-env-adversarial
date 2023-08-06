@@ -80,10 +80,10 @@ class HighwayEnv(AbstractEnv):
             # add the vehicle in to the road vehicles list
             self.road.vehicles.append(vehicle)
 
-            # create the rest vehicles in in the road
+            # create the rest vehicles in the road
             for _ in range(others):
                 # using the other_vehicle_type to create the rest vehicles, still using the vehicle.create_random
-                # but can be override by AdvVehicle.create_random
+                # but can be overridden by AdvVehicle.create_random
                 vehicle = other_vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"])
                 vehicle.randomize_behavior()
                 self.road.vehicles.append(vehicle)

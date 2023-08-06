@@ -3,6 +3,8 @@
 build/
 dist/
 scripts/
+highway_dqn/
+image/
 # Setup
 **.egg*
 

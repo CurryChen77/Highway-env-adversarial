@@ -487,43 +487,51 @@ class DefensiveVehicle(LinearVehicle):
 
 
 class AdvVehicle(IDMVehicle):
+    # the action of BVs are continous acc and steering over IDM output
+    # def act(self, bv_action: Union[dict, str, tuple] = None):
+    #     """
+    #     Execute an action.
+    #
+    #     For now, the action is an small change over the original IDM model
+    #
+    #     :param action: the action
+    #     """
+    #     if self.crashed:
+    #         return
+    #     action = {}
+    #     # Lateral: MOBIL
+    #     self.follow_road()
+    #     if self.enable_lane_change:
+    #         self.change_lane_policy()
+    #     action['steering'] = self.steering_control(self.target_lane_index)
+    #     action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
+    #
+    #     # Longitudinal: IDM
+    #     front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.lane_index)
+    #     action['acceleration'] = self.acceleration(ego_vehicle=self,
+    #                                                front_vehicle=front_vehicle,
+    #                                                rear_vehicle=rear_vehicle)
+    #     # When changing lane, check both current and target lanes
+    #     if self.lane_index != self.target_lane_index:
+    #         front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.target_lane_index)
+    #         target_idm_acceleration = self.acceleration(ego_vehicle=self,
+    #                                                     front_vehicle=front_vehicle,
+    #                                                     rear_vehicle=rear_vehicle)
+    #         action['acceleration'] = min(action['acceleration'], target_idm_acceleration)
+    #     # action['acceleration'] = self.recover_from_stop(action['acceleration'])
+    #     action['acceleration'] = np.clip(action['acceleration'], -self.ACC_MAX, self.ACC_MAX)
+    #
+    #     # add a small change over the original IDM model
+    #     adv_acc = bv_action.adv_acc  # the bv_action is a tuple
+    #     adv_steering = bv_action.adv_steering  # the bv_action is a tuple
+    #     action['acceleration'] += adv_acc
+    #     action['steering'] += adv_steering
+    #
+    #     Vehicle.act(self, action)  # Skip ControlledVehicle.act(), or the command will be overriden.
+
+    # TODO high level bv action
+    # # the action of BVs are high level action like "FASTER", "LANE_RIGHT", "LANE_LEFT"
     def act(self, bv_action: Union[dict, str, tuple] = None):
-        """
-        Execute an action.
+        # bv_action is a str
+        super(IDMVehicle, self).act(bv_action)  # using the ControlledVehicle.act() to perform high level action
 
-        For now, the action is an small change over the original IDM model
-
-        :param action: the action
-        """
-        if self.crashed:
-            return
-        action = {}
-        # Lateral: MOBIL
-        self.follow_road()
-        if self.enable_lane_change:
-            self.change_lane_policy()
-        action['steering'] = self.steering_control(self.target_lane_index)
-        action['steering'] = np.clip(action['steering'], -self.MAX_STEERING_ANGLE, self.MAX_STEERING_ANGLE)
-
-        # Longitudinal: IDM
-        front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.lane_index)
-        action['acceleration'] = self.acceleration(ego_vehicle=self,
-                                                   front_vehicle=front_vehicle,
-                                                   rear_vehicle=rear_vehicle)
-        # When changing lane, check both current and target lanes
-        if self.lane_index != self.target_lane_index:
-            front_vehicle, rear_vehicle = self.road.neighbour_vehicles(self, self.target_lane_index)
-            target_idm_acceleration = self.acceleration(ego_vehicle=self,
-                                                        front_vehicle=front_vehicle,
-                                                        rear_vehicle=rear_vehicle)
-            action['acceleration'] = min(action['acceleration'], target_idm_acceleration)
-        # action['acceleration'] = self.recover_from_stop(action['acceleration'])
-        action['acceleration'] = np.clip(action['acceleration'], -self.ACC_MAX, self.ACC_MAX)
-
-        # add a small change over the original IDM model
-        adv_acc = bv_action.adv_acc  # the bv_action is a tuple
-        adv_steering = bv_action.adv_steering  # the bv_action is a tuple
-        action['acceleration'] += adv_acc
-        action['steering'] += adv_steering
-
-        Vehicle.act(self, action)  # Skip ControlledVehicle.act(), or the command will be overriden.

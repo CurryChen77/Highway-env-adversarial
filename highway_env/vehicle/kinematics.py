@@ -79,8 +79,8 @@ class Vehicle(RoadObject):
         default_spacing = 12+1.0*speed
         offset = spacing * default_spacing * np.exp(-5 / 40 * len(road.network.graph[_from][_to]))
         x0 = np.max([lane.local_coordinates(v.position)[0] for v in road.vehicles]) \
-            if len(road.vehicles) else 3*offset
-        x0 += offset * road.np_random.uniform(0.9, 1.1)
+            if len(road.vehicles) else 3*offset  # the farthest vehicle on this lane or the init x0
+        x0 += offset * road.np_random.uniform(0.9, 1.1)  # each vehicle is placed based on the previous vehicle
         # create a specific vehicle given the longitudinal position x0
         v = cls(road, lane.position(x0, 0), lane.heading_at(x0), speed)
         return v
