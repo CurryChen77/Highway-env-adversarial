@@ -1,5 +1,6 @@
 import functools
 import itertools
+from collections import namedtuple
 from typing import TYPE_CHECKING, Optional, Union, Tuple, Callable, List
 from gymnasium import spaces
 import numpy as np
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
 
 Action = Union[int, np.ndarray, tuple]
-
+VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action_list"])
 
 class ActionType(object):
 

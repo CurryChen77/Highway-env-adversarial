@@ -3,7 +3,6 @@ from gymnasium.wrappers import RecordVideo
 from stable_baselines3 import DQN
 from collections import namedtuple
 
-Action = namedtuple("Action", ["ego_action", "bv_action"])
 
 TRAIN = False
 

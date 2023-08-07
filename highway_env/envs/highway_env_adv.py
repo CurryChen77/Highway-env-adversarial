@@ -7,14 +7,13 @@ from typing import Optional
 from highway_env.envs.highway_env import HighwayEnv
 from collections import namedtuple
 from highway_env.envs.common.abstract import AbstractEnv
-from highway_env.envs.common.action import Action
+from highway_env.envs.common.action import Action, VehicleAction
 from highway_env.road.road import Road, RoadNetwork
 from highway_env.utils import near_split
 from highway_env.vehicle.controller import ControlledVehicle
 from highway_env.vehicle.kinematics import Vehicle
 
 Observation = np.ndarray
-VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action_list"])
 
 class HighwayEnvAdv(HighwayEnv):
     """
@@ -91,7 +90,6 @@ class HighwayEnvAdv(HighwayEnv):
     def _simulate(self, action: Optional[Action] = None) -> None:
         """Perform several steps of simulation with constant action."""
         frames = int(self.config["simulation_frequency"] // self.config["policy_frequency"])
-
         if type(action) == VehicleAction:
             ego_action = action.ego_action
             bv_action_list = action.bv_action_list

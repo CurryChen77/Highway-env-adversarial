@@ -8,7 +8,7 @@ from gymnasium.utils import seeding
 import numpy as np
 from collections import namedtuple
 from highway_env import utils
-from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
+from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType, VehicleAction
 from highway_env.envs.common.observation import observation_factory, ObservationType
 from highway_env.envs.common.finite_mdp import finite_mdp
 from highway_env.envs.common.graphics import EnvViewer
@@ -17,7 +17,6 @@ from highway_env.vehicle.controller import MDPVehicle
 from highway_env.vehicle.kinematics import Vehicle
 
 Observation = TypeVar("Observation")
-VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action_list"])
 
 class AbstractEnv(gym.Env):
 
