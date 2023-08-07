@@ -1,14 +1,8 @@
 # -*-coding: utf-8 -*-
-# written by chenkeyu
 import gymnasium as gym
 from stable_baselines3 import DQN
-from gymnasium.wrappers import RecordVideo
-from collections import namedtuple, deque
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import random
+from collections import namedtuple
+
 
 Action = namedtuple("Action", ["ego_action", "bv_action_list"])
 Bv_action = {
