@@ -485,6 +485,8 @@ class MultiAgentObservation(ObservationType):
         self.observation_config = observation_config
         self.agents_observation_types = []
         for vehicle in self.env.controlled_vehicles:
+            # the generation order of agent_observation_type follow the same order of self.env.controlled_vehicle
+            # the first vehicle appended is the ego vehicle, and the rest vehicles are the bvs
             obs_type = observation_factory(self.env, self.observation_config)
             obs_type.observer_vehicle = vehicle
             self.agents_observation_types.append(obs_type)

@@ -21,8 +21,7 @@ python .\EgoAgent_trainer_DQN.py
 * **创建逻辑：**
 * 将所有车辆（自车、周车）全部归入self.controlled_vehicles中
 * 创建时，第一辆controlled为自车，其余为周车，且自车的类型为self.action_type.vehicle_class(即为MDPVehicle类)
-* 创建时，除第一辆controlled的为周车，周车类型为other_vehicle_type(即为AdvVehicle类)但由于AdvVehicle没有create_random函数，因此使用的
-是Vehicle类的create_random函数，和自车一致
+* 创建时，除第一辆controlled的为周车，周车类型为other_vehicle_type(即为AdvVehicle类)但由于AdvVehicle没有create_random函数，因此使用的是Vehicle类的create_random函数，和自车一致
 2. 初始条件可改的为create_random中的speed, land_id, spacing等
 
 ### 周车行驶行为类：
@@ -59,11 +58,11 @@ python .\EgoAgent_trainer_DQN.py
 
 1. **针对环境中每一辆车，送入周车模型计算对应单车的action**
 
-   解决方法：采用MultiAgentObservation，每一辆周车都具有其各自的Obs
+   解决方法：采用MultiAgentObservation，每一辆周车都具有其各自的Obs, 其各自的Obs中，第一行为自己的state，往下顺序按照其他车辆和自己的距离远近  
+   依次递增  
+   且将所有环境车辆都加入到self.controlled_vehicle中，但ego为其中的第一个，且其类别为MDPVehicle，其他周车的类别为AdvVehicle
 
-   且将所有环境车辆都加入到self.controlled_vehicle中，但ego为其中的第一个，且其类别为MDPVehicle，其他的为AdvVehicle
-
-   ![image-20230806153552331](image/obs)
+   ![image-20230806153552331](image/obs.jpeg)
 
 2. 针对环境中所有的车辆，送入周车模型计算所有车辆的action
 
