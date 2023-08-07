@@ -4,7 +4,7 @@ from stable_baselines3 import DQN
 from collections import namedtuple
 
 
-Action = namedtuple("Action", ["ego_action", "bv_action_list"])
+VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action_list"])
 Bv_action = {
         0: 'LANE_LEFT',
         1: 'IDLE',
@@ -68,7 +68,7 @@ if __name__ == '__main__':
                 bv_action_idx = bv_model(obs[i+1])  # choose the bv observation (the first is ego)
                 bv_action = Bv_action[bv_action_idx]  # bv_action is str type
                 bv_action_list.append(bv_action)
-            action = Action(ego_action=ego_action, bv_action_list=bv_action_list)
+            action = VehicleAction(ego_action=ego_action, bv_action_list=bv_action_list)
 
             # Get ego reward
             next_obs, reward, done, truncated, info = env.step(action)

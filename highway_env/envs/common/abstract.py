@@ -6,7 +6,7 @@ from gymnasium import Wrapper
 from gymnasium.wrappers import RecordVideo
 from gymnasium.utils import seeding
 import numpy as np
-
+from collections import namedtuple
 from highway_env import utils
 from highway_env.envs.common.action import action_factory, Action, DiscreteMetaAction, ActionType
 from highway_env.envs.common.observation import observation_factory, ObservationType
@@ -17,7 +17,7 @@ from highway_env.vehicle.controller import MDPVehicle
 from highway_env.vehicle.kinematics import Vehicle
 
 Observation = TypeVar("Observation")
-
+VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action_list"])
 
 class AbstractEnv(gym.Env):
 
@@ -234,7 +234,7 @@ class AbstractEnv(gym.Env):
         self.time += 1 / self.config["policy_frequency"]
         self._simulate(action)
         # ego action
-        if type(action) != int or list:  # TODO
+        if type(action) == VehicleAction:
             ego_action = action.ego_action
         else:
             ego_action = action

@@ -9,7 +9,7 @@ TRAIN = False
 
 if __name__ == '__main__':
     # Create the environment
-    env = gym.make("highway-adv-v0", render_mode="rgb_array")
+    env = gym.make("highway-v0", render_mode="rgb_array")
     env.configure({
         "lanes_count": 2,  # the number of the lane
         "vehicles_count": 2,  # the number of background vehicle

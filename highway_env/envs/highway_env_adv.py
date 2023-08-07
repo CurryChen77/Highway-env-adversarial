@@ -14,7 +14,7 @@ from highway_env.vehicle.controller import ControlledVehicle
 from highway_env.vehicle.kinematics import Vehicle
 
 Observation = np.ndarray
-EGO_Action = namedtuple("Action", ["ego_action", "bv_action_list"])
+VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action_list"])
 
 class HighwayEnvAdv(HighwayEnv):
     """
@@ -81,7 +81,7 @@ class HighwayEnvAdv(HighwayEnv):
         """Perform several steps of simulation with constant action."""
         frames = int(self.config["simulation_frequency"] // self.config["policy_frequency"])
 
-        if type(action) != int or list:  # TODO Action
+        if type(action) == VehicleAction:
             ego_action = action.ego_action
             bv_action_list = action.bv_action_list
         else:
