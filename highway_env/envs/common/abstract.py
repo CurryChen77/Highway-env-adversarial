@@ -234,7 +234,7 @@ class AbstractEnv(gym.Env):
         self.time += 1 / self.config["policy_frequency"]
         self._simulate(action)
         # ego action
-        if type(action) == tuple:
+        if type(action) != int or list:  # TODO
             ego_action = action.ego_action
         else:
             ego_action = action

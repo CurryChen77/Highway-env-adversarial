@@ -41,8 +41,8 @@ if __name__ == '__main__':
             }
         },
         "lanes_count": 2,  # the number of the lane
-        "vehicles_count": VEHICLE_COUNT,  # the number of background vehicle
-        "controlled_vehicles": VEHICLE_COUNT,
+        "vehicles_count": VEHICLE_COUNT,  # the number of all the vehicle
+        "controlled_vehicles": VEHICLE_COUNT,  # control all the vehicle (ego and bvs)
         "duration": 8,  # [s]
         "other_vehicles_type": "highway_env.vehicle.behavior.AdvVehicle",  # change the bv behavior
         "initial_lane_id": 1  # the lane at the bottom

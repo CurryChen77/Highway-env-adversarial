@@ -81,7 +81,7 @@ class HighwayEnvAdv(HighwayEnv):
         """Perform several steps of simulation with constant action."""
         frames = int(self.config["simulation_frequency"] // self.config["policy_frequency"])
 
-        if type(action) != int or list:  # TODO Action :
+        if type(action) != int or list:  # TODO Action
             ego_action = action.ego_action
             bv_action_list = action.bv_action_list
         else:

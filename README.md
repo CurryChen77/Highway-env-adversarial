@@ -1,22 +1,50 @@
 # Highway-env based adversarial testing
 
 ## Usage
-1. install the highway-env-adv
+1. Install the highway-env-adv
 ```
 python setup.py install
 ```
-2. train the ego agent
+2. Install the stable-baselines3  
+Stable-Baselines3 requires python 3.8+ and PyTorch >= 1.13
+```
+pip install stable-baselines3[extra]
+```
+3. Train the ego agent
 ```
 python .\EgoAgent_trainer_DQN.py
 ```
 
-## env: highway_env_adv
-1. Still need to change the init generation of the background vehicle
-2. change the AbstractEnv on the **step** and **_simulate** function to support the action (tuple) for ego and the bv.
-But the reward is still the reward for the ego agent, based on the ego_action
+## Environment: highway_env_adv
+### 初始条件：
+1. 创建自车以及周车的初始位置[highway_env_adv](highway_env/envs/highway_env_adv.py)中的_create_vehicles()函数  
+* **创建逻辑：**
+* 将所有车辆（自车、周车）全部归入self.controlled_vehicles中
+* 创建时，第一辆controlled为自车，其余为周车，且自车的类型为self.action_type.vehicle_class(即为MDPVehicle类)
+* 创建时，除第一辆controlled的为周车，周车类型为other_vehicle_type(即为AdvVehicle类)但由于AdvVehicle没有create_random函数，因此使用的
+是Vehicle类的create_random函数，和自车一致
+2. 初始条件可改的为create_random中的speed, land_id, spacing等
 
-## bv behavior type: AdvVehicle
-receive the bv_action (tuple) from the bv_model, and add the tiny changes to original IMDVehicle (adv_acc, adv_steering)
+### 周车行驶行为类：
+[AdvVehicle](highway_env/vehicle/behavior.py)
+通过改变act函数来确定接收到来自bv_model发出的action动作后，某一周车采取怎样的行为
+1. 基于IDM模型的act()，在IDM模型计算得到的acceleration, steering后加上bv_model输出的adv_acc, adv_steering，由Vehicle类（运动学模型）执行
+2. high-level的动作，传入字符串动作("FASTER", "LANE_LEFT"等)
+
+### Main脚本
+[Adv_main](Adv_main.py)
+1. env_config中，obs类型为MultiAgentObservation，从而实现获得的obs为所有车辆独特的obs，其中ego由于在controlled_vehicle中是第一辆，因此
+传出的obs中，第一个为ego的obs，其余的为周车的obs
+```
+"observation": {
+   "type": "MultiAgentObservation",  # get the observation from all the controlled vehicle (ego and bv)
+   "observation_config": {
+       "type": "Kinematics",
+   }
+},
+```
+2. bv_model输入一辆周车的obs，输出一辆周车的action
+3. 当前设定的bv_action是list类型，即每一个list中的元素为一辆周车的action
 
 ## TODO
 ### 确定自车模型 (pretrained)  
