@@ -1,7 +1,7 @@
 # Highway-env based adversarial testing
 
 ## Usage
-
+1. Install highway-adv-env
 ```
 python setup.py install
 ```

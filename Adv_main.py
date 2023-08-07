@@ -23,6 +23,10 @@ def load_bv_agent():
     pass
 
 
+def bvs_init_condition(lanes_count=2, vehicle_count=3):
+    pass
+    return bv_init_lane_id, bv_init_speed, bvs_density
+
 if __name__ == '__main__':
     # Ego Setting
     EGO_MODEL_PATH = "highway_dqn/model"
@@ -32,6 +36,9 @@ if __name__ == '__main__':
 
     # BV Setting
     MAX_TRAIN_EPISODE = 10000
+
+    # Initial condition
+    bv_init_lane_id, bv_init_speed, bvs_density = bvs_init_condition(lanes_count=LANES_COUNT, vehicle_count=VEHICLE_COUNT)
 
     # create the environment
     env = gym.make("highway-adv-v0", render_mode="rgb_array")
@@ -47,7 +54,10 @@ if __name__ == '__main__':
         "controlled_vehicles": VEHICLE_COUNT,  # control all the vehicle (ego and bvs), now we control all the vehicle
         "duration": SIMULATION_TIME,  # simulation time [s]
         "other_vehicles_type": "highway_env.vehicle.behavior.AdvVehicle",  # change the bv behavior
-        "initial_lane_id": LANES_COUNT-1  # the ego vehicle will be placed at the bottom lane (lane_id=1 means the top lane)
+        "initial_lane_id": LANES_COUNT-1,  # the ego vehicle will be placed at the bottom lane (lane_id=1 means the top lane)
+        "bv_init_lane_id": bv_init_lane_id,  # the initial lane id for the bvs to spawn       -> list
+        "bv_init_speed": bv_init_speed,  # the initial speed for all the bvs              -> list
+        "bvs_density": bvs_density  # the initial spacing density for all the bvs    -> list
     })
     obs, info = env.reset()
 

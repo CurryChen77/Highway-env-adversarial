@@ -49,7 +49,10 @@ class HighwayEnvAdv(HighwayEnv):
             "lane_change_reward": 0,   # The reward received at each lane change action.
             "reward_speed_range": [20, 30],
             "normalize_reward": True,
-            "offroad_terminal": False
+            "offroad_terminal": False,
+            "bv_init_lane_id": None,      # the initial lane id for the bvs to spawn       -> list
+            "bv_init_speed": None,        # the initial speed for all the bvs              -> list
+            "bvs_density": None           # the initial spacing density for all the bvs    -> list
         })
         return config
 
@@ -72,7 +75,15 @@ class HighwayEnvAdv(HighwayEnv):
                 vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
             else:
                 # Create the bv (the rest vehicle)  other_vehicle_type -> AdvVehicle
-                vehicle = other_vehicles_type.create_random(self.road, spacing=1 / self.config["vehicles_density"])
+                vehicle = other_vehicles_type.create_random(
+                    self.road,
+                    # the speed of bvs start from idx 0
+                    speed=self.config["bv_init_speed"][i-1] if self.config["bv_init_speed"] is not None else None,
+                    # the lane_id of bvs start from idx 0
+                    lane_id=self.config["bv_init_lane_id"][i-1] if self.config["bv_init_lane_id"] is not None else None,
+                    # the spacing density of bvs start from idx 0
+                    spacing=1 / self.config["bvs_density"][i-1] if self.config["bvs_density"] is not None else self.config["vehicles_density"]
+                )
                 vehicle.randomize_behavior()
             self.controlled_vehicles.append(vehicle)  # contain all the vehicle
             self.road.vehicles.append(vehicle)
