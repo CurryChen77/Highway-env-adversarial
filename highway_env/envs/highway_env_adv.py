@@ -15,6 +15,7 @@ from highway_env.vehicle.kinematics import Vehicle
 
 Observation = np.ndarray
 
+
 class HighwayEnvAdv(HighwayEnv):
     """
     A highway driving environment.
