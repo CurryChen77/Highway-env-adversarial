@@ -217,6 +217,9 @@ class AbstractEnv(gym.Env):
         """
         raise NotImplementedError()
 
+    def update_obs(self) -> None:
+        raise NotImplementedError()
+
     def step(self, action: Action) -> Tuple[Observation, float, bool, bool, dict]:
         """
         Perform an action and step the environment dynamics.
@@ -238,7 +241,13 @@ class AbstractEnv(gym.Env):
         else:
             ego_action = action
 
-        obs = self.observation_type.observe()
+        previous_obs = self.observation_type.observe()
+        if type(action) == VehicleAction:
+            self.update_obs()
+            updated_obs = self.observation_type.observe()
+            obs = [previous_obs, updated_obs]
+        else:
+            obs = previous_obs
         reward = self._reward(ego_action)  # need ego action to get the reward
         terminated = self._is_terminated()
         truncated = self._is_truncated()

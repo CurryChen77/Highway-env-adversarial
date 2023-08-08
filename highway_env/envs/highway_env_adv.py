@@ -38,8 +38,10 @@ class HighwayEnvAdv(HighwayEnv):
             "vehicles_count": 50,
             "controlled_vehicles": 1,
             "initial_lane_id": None,
+            "initial_bv_lane_id": None,
             "duration": 40,  # [s]
             "ego_spacing": 2,
+            "selected_bv_spacing": 3,
             "vehicles_density": 1,
             "collision_reward": -1,    # The reward received when colliding with a vehicle.
             "right_lane_reward": 0.1,  # The reward received when driving on the right-most lanes, linearly mapped to
@@ -50,53 +52,64 @@ class HighwayEnvAdv(HighwayEnv):
             "reward_speed_range": [20, 30],
             "normalize_reward": True,
             "offroad_terminal": False,
-            "bv_init_lane_id": None,      # the initial lane id for the bvs to spawn       -> list
-            "bv_init_speed": None,        # the initial speed for all the bvs              -> list
-            "bvs_density": None           # the initial spacing density for all the bvs    -> list
+            "selected_BV_type": "highway_env.vehicle.behavior.AdvVehicle",
+
         })
         return config
 
     def _create_vehicles(self) -> None:
         """Create some new random vehicles of a given type, and add them on the road."""
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
-        other_per_controlled = near_split(self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"])
+        selected_BV_type = utils.class_from_path(self.config["selected_BV_type"])
+        # other_per_controlled = near_split(self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"])
 
+        # [2,1] if total 3 vehicle on the road, and the first 2 is one ego and one selected bv, the second 1 is the rest bvs
+        other_vehicle_number = self.config["vehicles_count"]-self.config["controlled_vehicles"]
         self.controlled_vehicles = []
-        for i, others in enumerate(other_per_controlled):
-            if i == 0:  # the first controlled vehicle
-                # create the ego vehicle (the first vehicle)
-                vehicle = Vehicle.create_random(
-                    self.road,
-                    speed=25,
-                    lane_id=self.config["initial_lane_id"],
-                    spacing=self.config["ego_spacing"]
-                )
-                # the type of ego vehicle is MDPVehicle
-                vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
-            else:
-                # Create the bv (the rest vehicle)  other_vehicle_type -> AdvVehicle
-                vehicle = other_vehicles_type.create_random(
-                    self.road,
-                    # the speed of bvs start from idx 0
-                    speed=self.config["bv_init_speed"][i-1] if self.config["bv_init_speed"] is not None else None,
-                    # the lane_id of bvs start from idx 0
-                    lane_id=self.config["bv_init_lane_id"][i-1] if self.config["bv_init_lane_id"] is not None else None,
-                    # the spacing density of bvs start from idx 0
-                    spacing=1 / self.config["bvs_density"][i-1] if self.config["bvs_density"] is not None else self.config["vehicles_density"]
-                )
-                vehicle.randomize_behavior()
-            self.controlled_vehicles.append(vehicle)  # contain all the vehicle
+
+        # the controlled vehicle (ego and selected bv)
+        # create the ego vehicle (the first vehicle)
+        vehicle = Vehicle.create_random(
+            self.road,
+            speed=25,
+            lane_id=self.config["initial_lane_id"],
+            spacing=self.config["ego_spacing"]
+        )
+        # the type of ego vehicle is MDPVehicle
+        vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+        self.controlled_vehicles.append(vehicle)  # contain the ego and the selected bv for observation
+        self.road.vehicles.append(vehicle)
+
+        # create the selected bv (the second controlled)
+        selected_bv = selected_BV_type.create_random(
+            self.road,
+            lane_id=self.config["initial_bv_lane_id"],
+            spacing=self.config["selected_bv_spacing"]
+        )
+        self.selected_bv = selected_bv  # the type of selected bv is AdvVehicle
+        self.controlled_vehicles.append(selected_bv)  # contain the ego and the selected bv for observation
+        self.road.vehicles.append(selected_bv)
+
+        # create others number of normal bvs
+        for _ in range(other_vehicle_number):
+            # Create the bv (the rest vehicle)  other_vehicle_type -> IDMVehicle
+            vehicle = other_vehicles_type.create_random(
+                self.road,
+                spacing=1 / self.config["vehicles_density"]
+            )
+            vehicle.randomize_behavior()
             self.road.vehicles.append(vehicle)
+
 
     def _simulate(self, action: Optional[Action] = None) -> None:
         """Perform several steps of simulation with constant action."""
         frames = int(self.config["simulation_frequency"] // self.config["policy_frequency"])
         if type(action) == VehicleAction:
             ego_action = action.ego_action
-            bv_action_list = action.bv_action_list
+            bv_action = action.bv_action
         else:
             ego_action = action
-            bv_action_list = None
+            bv_action = None
         for frame in range(frames):
             # Forward action to the ego vehicle
             if ego_action is not None \
@@ -104,21 +117,36 @@ class HighwayEnvAdv(HighwayEnv):
                     and self.steps % int(self.config["simulation_frequency"] // self.config["policy_frequency"]) == 0:
                 self.action_type.act(ego_action)  # self.controlled_vehicle.act() -> MDPVehicle.act(ego_action)
 
-            if bv_action_list:  # bv_action is a list [str, str]
-                for i in range(len(self.controlled_vehicles)-1):
-                    # skip the first controlled_vehicle(ego), then the rest is the bv
-                    self.controlled_vehicles[i+1].act(bv_action_list[i])  # AdvVehicle.act
-            else:
-                self.road.act()  # self.road.vehicle.act() -> IDMVehicle.act()
+            if bv_action:  # bv_action
+                # perform the selected bv action
+                self.selected_bv.act(bv_action)  # AdvVehicle.act
+
+            self.road.act()  # self.road.vehicle.act() -> IDMVehicle.act()
             self.road.step(1 / self.config["simulation_frequency"])
             self.steps += 1
-
             # Automatically render intermediate simulation steps if a viewer has been launched
             # Ignored if the rendering is done offscreen
             if frame < frames - 1:  # Last frame will be rendered through env.render() as usual
                 self._automatic_rendering()
 
         self.enable_auto_render = False
+
+    def update_obs(self):
+        # updated the selected bv (in the front of ego, and the closest)
+        closest_bv = self.road.close_objects_to(
+            self.controlled_vehicles[0],  # ego vehicle
+            self.PERCEPTION_DISTANCE,
+            count=1,  # only need one vehicle
+            see_behind=False,  # only looking forward
+            sort=True,  # get the closest
+            vehicles_only=True
+        )
+        if closest_bv:
+            self.selected_bv = closest_bv[0]  # closest_bv is a list, the first element is what we want
+            # After conducing the action, the vehicles' state changes, need to reconsider the new selected bv
+            # get the current object need observing (the second car in the agent_observation_type list is selected bv)
+            self.observation_type.agents_observation_types[1].observer_vehicle = self.selected_bv
+
 
     def _reward(self, action: Action) -> float:
         """

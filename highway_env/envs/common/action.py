@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from highway_env.envs.common.abstract import AbstractEnv
 
 Action = Union[int, np.ndarray, tuple]
-VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action_list"])
+VehicleAction = namedtuple("VehicleAction", ["ego_action", "bv_action"])
 
 class ActionType(object):
 

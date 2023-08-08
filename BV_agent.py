@@ -70,16 +70,18 @@ class SACAgent:
         # 从经验回放缓冲区中随机采样一批数据
         state_batch, action_batch, next_state_batch, reward_batch, done_batch = replay_buffer.sample(batch_size)
 
+
         # 转换为张量
-        state_batch = torch.FloatTensor(state_batch)
-        action_batch = torch.FloatTensor(action_batch)
-        next_state_batch = torch.FloatTensor(next_state_batch)
-        reward_batch = torch.FloatTensor(reward_batch)
-        done_batch = torch.FloatTensor(np.float32(done_batch))
+        state_batch = torch.FloatTensor(state_batch).reshape((batch_size, -1))  # [64, 25]
+        action_batch = torch.FloatTensor(action_batch)  # [64, 1]
+        next_state_batch = torch.FloatTensor(next_state_batch).reshape((batch_size, -1))  # [64, 25]
+        reward_batch = torch.FloatTensor(reward_batch).unsqueeze(-1)  # [64, 1]
+        done_batch = torch.FloatTensor(np.float32(done_batch)).unsqueeze(-1)  # [64, 1]
 
         # 计算Target Q值
         with torch.no_grad():
             next_action = self.actor(next_state_batch)
+            # temp = torch.cat((next_state_batch, next_action), 1)
             target_q1 = self.target_critic1(torch.cat((next_state_batch, next_action), 1))
             target_q2 = self.target_critic2(torch.cat((next_state_batch, next_action), 1))
             target_q = torch.min(target_q1, target_q2)
