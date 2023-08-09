@@ -3,7 +3,7 @@ import gymnasium as gym
 from stable_baselines3 import DQN
 from collections import namedtuple
 import numpy as np
-from BV_agent import SACAgent, ReplayBuffer
+from SAC_agent import SACAgent, ReplayBuffer
 from highway_env.envs.common.action import VehicleAction
 
 Bv_Action = {

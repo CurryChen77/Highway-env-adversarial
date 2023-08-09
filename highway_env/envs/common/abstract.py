@@ -248,7 +248,7 @@ class AbstractEnv(gym.Env):
             obs = [previous_obs, updated_obs]
         else:
             obs = previous_obs
-        reward = self._reward(ego_action)  # need ego action to get the reward
+        reward = self._reward(action)  # if no bv then only the ego action, else got both ego and bv action
         terminated = self._is_terminated()
         truncated = self._is_truncated()
         info = self._info(obs, ego_action)  # need ego action to get the info

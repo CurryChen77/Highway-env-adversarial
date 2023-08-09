@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import random
+import os
 
 
 class ReplayBuffer:
@@ -112,35 +113,19 @@ class SACAgent:
         for target_param, param in zip(self.target_critic2.parameters(), self.critic2.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
+    def save(self, model_name):
+        os.makedirs(f"./BV_model/{model_name}", exist_ok=True)
+        # 保存策略网络和Q网络的模型参数
+        torch.save(self.actor.state_dict(), f"./BV_model/{model_name}/SAC-actor.pth")
+        torch.save(self.critic1.state_dict(), f"./BV_model/{model_name}/SAC-critic1.pth")
+        torch.save(self.critic2.state_dict(), f"./BV_model/{model_name}/SAC-critic2.pth")
+        print("Successfully save the model")
 
-# # 创建highway-env环境
-# env = gym.make('highway-v0')
-#
-# state_dim = env.observation_space.shape[0]
-# action_dim = env.action_space.shape[0]
-#
-#
-# # 创建SACAgent
-# agent = SACAgent(state_dim, action_dim)
-#
-# buffer_size = 100000
-# replay_buffer = ReplayBuffer(buffer_size)
-#
-# # 训练SACAgent
-# max_episodes = 1000
-# max_steps = 1000
-# for episode in range(max_episodes):
-#     state = env.reset()
-#     episode_reward = 0
-#     for step in range(max_steps):
-#         action = agent.select_action(state)
-#         next_state, reward, done, _ = env.step(action)
-#         agent.train(replay_buffer, batch_size=64)
-#         episode_reward += reward
-#         if done:
-#             break
-#         state = next_state
-#     print(f"Episode: {episode + 1}, Reward: {episode_reward:.2f}")
-#
-# # 关闭环境
-# env.close()
+    def load(self, model_name):
+        # 创建SAC代理并加载策略网络和Q网络的模型参数
+        self.actor.load_state_dict(torch.load(f"./BV_model/{model_name}/SAC-actor.pth"))
+        self.critic1.load_state_dict(torch.load(f"./BV_model/{model_name}/SAC-critic1.pth"))
+        self.critic2.load_state_dict(torch.load(f"./BV_model/{model_name}/SAC-critic2.pth"))
+        self.target_critic1.load_state_dict(self.critic1.state_dict())
+        self.target_critic2.load_state_dict(self.critic2.state_dict())
+        print("--------Successfully load the model--------")

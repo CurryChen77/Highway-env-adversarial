@@ -4,7 +4,7 @@ import numpy as np
 
 from highway_env import utils
 from typing import Optional
-from highway_env.envs.highway_env import HighwayEnv
+from highway_env.envs.highway_env_adv import HighwayEnvAdv
 from collections import namedtuple
 from highway_env.envs.common.abstract import AbstractEnv
 from highway_env.envs.common.action import Action, VehicleAction
@@ -16,7 +16,7 @@ from highway_env.vehicle.kinematics import Vehicle
 Observation = np.ndarray
 
 
-class HighwayEnvAdv(HighwayEnv):
+class HighwayEnvAdvIDM(HighwayEnvAdv):
     """
     A highway driving environment.
 
@@ -34,6 +34,7 @@ class HighwayEnvAdv(HighwayEnv):
             "action": {
                 "type": "DiscreteMetaAction",
             },
+            "ego_type": "highway_env.vehicle.behavior.IDMVehicle",
             "lanes_count": 4,
             "vehicles_count": 50,
             "controlled_vehicles": 1,
@@ -59,6 +60,7 @@ class HighwayEnvAdv(HighwayEnv):
 
     def _create_vehicles(self) -> None:
         """Create some new random vehicles of a given type, and add them on the road."""
+        ego_type = utils.class_from_path(self.config["ego_type"])
         other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
         selected_BV_type = utils.class_from_path(self.config["selected_BV_type"])
         # other_per_controlled = near_split(self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"])
@@ -76,7 +78,7 @@ class HighwayEnvAdv(HighwayEnv):
             spacing=self.config["ego_spacing"]
         )
         # the type of ego vehicle is MDPVehicle
-        vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+        vehicle = ego_type(self.road, vehicle.position, vehicle.heading, vehicle.speed)
         self.controlled_vehicles.append(vehicle)  # contain the ego and the selected bv for observation
         self.road.vehicles.append(vehicle)
 
@@ -100,7 +102,6 @@ class HighwayEnvAdv(HighwayEnv):
             vehicle.randomize_behavior()
             self.road.vehicles.append(vehicle)
 
-
     def _simulate(self, action: Optional[Action] = None) -> None:
         """Perform several steps of simulation with constant action."""
         frames = int(self.config["simulation_frequency"] // self.config["policy_frequency"])
@@ -115,7 +116,7 @@ class HighwayEnvAdv(HighwayEnv):
             if ego_action is not None \
                     and not self.config["manual_control"] \
                     and self.steps % int(self.config["simulation_frequency"] // self.config["policy_frequency"]) == 0:
-                self.action_type.act(ego_action)  # self.controlled_vehicle.act() -> MDPVehicle.act(ego_action)
+                self.controlled_vehicles[0].act(ego_action)  # self.controlled_vehicle.act() -> MDPVehicle.act(ego_action)
 
             if bv_action:  # bv_action
                 # perform the selected bv action
@@ -131,74 +132,7 @@ class HighwayEnvAdv(HighwayEnv):
 
         self.enable_auto_render = False
 
-    def update_obs(self):
-        # updated the selected bv (in the front of ego, and the closest)
-        closest_bv = self.road.close_objects_to(
-            self.controlled_vehicles[0],  # ego vehicle
-            self.PERCEPTION_DISTANCE,
-            count=1,  # only need one vehicle
-            see_behind=False,  # only looking forward
-            sort=True,  # get the closest
-            vehicles_only=True
-        )
-        if closest_bv:
-            self.selected_bv = closest_bv[0]  # closest_bv is a list, the first element is what we want
-            # After conducing the action, the vehicles' state changes, need to reconsider the new selected bv
-            # get the current object need observing (the second car in the agent_observation_type list is selected bv)
-            self.observation_type.agents_observation_types[1].observer_vehicle = self.selected_bv
-
-
-    def _reward(self, action: Action) -> float:
-        """
-        The reward is defined to foster driving at high speed, on the rightmost lanes, and to avoid collisions.
-        :param action: the last action performed
-        :return: the corresponding reward
-        """
-        ego_action = VehicleAction.ego_action
-        bv_action = VehicleAction.bv_action
-        rewards = self._rewards(ego_action)  # calculate the reward of the ego agent
-
-        reward = sum(self.config.get(name, 0) * reward for name, reward in rewards.items())
-        if self.config["normalize_reward"]:
-            reward = utils.lmap(reward,
-                                [self.config["collision_reward"],
-                                 self.config["high_speed_reward"] + self.config["right_lane_reward"]],
-                                [0, 1])
-        reward *= rewards['on_road_reward']
-        bv_reward = self.bv_reward(bv_action)  # the reward of selected bv
-        reward = reward + bv_reward
-        return reward
-
-    def bv_reward(self, bv_action):
-        bv_collision_reward = float(self.controlled_vehicles[1].crashed)  # whether the selected bv has crashed
-        bv_rewards = bv_collision_reward
-        return bv_rewards
-
-    def _rewards(self, action: Action) -> Dict[Text, float]:
-        # self.vehicle is the first vehicle in controlled_vehicle -> ego vehicle
-        neighbours = self.road.network.all_side_lanes(self.vehicle.lane_index)
-        lane = self.vehicle.target_lane_index[2] if isinstance(self.vehicle, ControlledVehicle) \
-            else self.vehicle.lane_index[2]
-        # Use forward speed rather than speed, see https://github.com/eleurent/highway-env/issues/268
-        forward_speed = self.vehicle.speed * np.cos(self.vehicle.heading)
-        scaled_speed = utils.lmap(forward_speed, self.config["reward_speed_range"], [0, 1])
-        return {
-            "collision_reward": float(self.vehicle.crashed),
-            "right_lane_reward": lane / max(len(neighbours) - 1, 1),
-            "high_speed_reward": np.clip(scaled_speed, 0, 1),
-            "on_road_reward": float(self.vehicle.on_road)
-        }
-
-    def _is_terminated(self) -> bool:
-        """The episode is over if the ego vehicle crashed."""
-        return (self.vehicle.crashed or
-                self.config["offroad_terminal"] and not self.vehicle.on_road)
-
-    def _is_truncated(self) -> bool:
-        """The episode is truncated if the time limit is reached."""
-        return self.time >= self.config["duration"]
-
-class HighwayEnvAdvFast(HighwayEnvAdv):
+class HighwayEnvAdvIDMFast(HighwayEnvAdvIDM):
     """
     A variant of highway-v0 with faster execution:
         - lower simulation frequency
