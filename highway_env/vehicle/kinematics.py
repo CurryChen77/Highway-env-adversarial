@@ -44,6 +44,7 @@ class Vehicle(RoadObject):
         self.impact = None
         self.log = []
         self.history = deque(maxlen=self.HISTORY_SIZE)
+        self._selected = False
 
     @classmethod
     def create_random(cls, road: Road,
@@ -174,6 +175,14 @@ class Vehicle(RoadObject):
     @property
     def velocity(self) -> np.ndarray:
         return self.speed * self.direction  # TODO: slip angle beta should be used here
+
+    @property
+    def selected(self) -> bool:
+        return self._selected
+
+    @selected.setter
+    def selected(self, new_value):
+        self._selected = new_value
 
     @property
     def destination(self) -> np.ndarray:

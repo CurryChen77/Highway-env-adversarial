@@ -1,20 +1,33 @@
 # Highway-env based adversarial testing
 
 ## Usage
-1. Install highway-adv-env
+### Install highway-adv-env
 ```
 python setup.py install
 ```
-2. Install the stable-baselines3  
+### Install the stable-baselines3  
 Stable-Baselines3 requires python 3.8+ and PyTorch >= 1.13
+* windows:
 ```
 pip install stable-baselines3[extra]
 ```
-3. Train the ego agent
+* Ubuntu:
+```
+pip install "stable-baselines3[extra]"
+```
+### Train the ego agent
 ```
 python .\EgoAgent_trainer_DQN.py
 ```
-
+### Open the tensorboard
+* DQN as ego car
+```
+tensorboard --logdir=./AdvLogs/DQN-Ego
+```
+* IDM as ego car
+```
+tensorboard --logdir=./AdvLogs/IDM-Ego
+```
 ## Environment: highway_env_adv
 ### 初始条件：
 1. 创建自车以及周车的初始位置[highway_env_adv](highway_env/envs/highway_env_adv.py)中的_create_vehicles()函数  

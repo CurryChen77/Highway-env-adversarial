@@ -34,7 +34,7 @@ class HighwayEnvAdvIDM(HighwayEnvAdv):
             "action": {
                 "type": "DiscreteMetaAction",
             },
-            "ego_type": "highway_env.vehicle.behavior.IDMVehicle",
+            "ego_type": "highway_env.vehicle.behavior.DefensiveVehicle",
             "lanes_count": 4,
             "vehicles_count": 50,
             "controlled_vehicles": 1,
@@ -53,7 +53,7 @@ class HighwayEnvAdvIDM(HighwayEnvAdv):
             "reward_speed_range": [20, 30],
             "normalize_reward": True,
             "offroad_terminal": False,
-            "selected_BV_type": "highway_env.vehicle.behavior.AdvVehicle",
+            "BV_type": "highway_env.vehicle.behavior.AdvVehicle",
 
         })
         return config
@@ -61,8 +61,7 @@ class HighwayEnvAdvIDM(HighwayEnvAdv):
     def _create_vehicles(self) -> None:
         """Create some new random vehicles of a given type, and add them on the road."""
         ego_type = utils.class_from_path(self.config["ego_type"])
-        other_vehicles_type = utils.class_from_path(self.config["other_vehicles_type"])
-        selected_BV_type = utils.class_from_path(self.config["selected_BV_type"])
+        bv_type = utils.class_from_path(self.config["BV_type"])
         # other_per_controlled = near_split(self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"])
 
         # [2,1] if total 3 vehicle on the road, and the first 2 is one ego and one selected bv, the second 1 is the rest bvs
@@ -83,19 +82,20 @@ class HighwayEnvAdvIDM(HighwayEnvAdv):
         self.road.vehicles.append(vehicle)
 
         # create the selected bv (the second controlled)
-        selected_bv = selected_BV_type.create_random(
+        selected_bv = bv_type.create_random(
             self.road,
             lane_id=self.config["initial_bv_lane_id"],
             spacing=self.config["selected_bv_spacing"]
         )
-        self.selected_bv = selected_bv  # the type of selected bv is AdvVehicle
+        print()
+        selected_bv.selected = True
         self.controlled_vehicles.append(selected_bv)  # contain the ego and the selected bv for observation
         self.road.vehicles.append(selected_bv)
 
         # create others number of normal bvs
         for _ in range(other_vehicle_number):
             # Create the bv (the rest vehicle)  other_vehicle_type -> IDMVehicle
-            vehicle = other_vehicles_type.create_random(
+            vehicle = bv_type.create_random(
                 self.road,
                 spacing=1 / self.config["vehicles_density"]
             )
@@ -120,7 +120,7 @@ class HighwayEnvAdvIDM(HighwayEnvAdv):
 
             if bv_action:  # bv_action
                 # perform the selected bv action
-                self.selected_bv.act(bv_action)  # AdvVehicle.act
+                self.controlled_vehicles[1].adv_act(bv_action)  # Adv_act
 
             self.road.act()  # self.road.vehicle.act() -> IDMVehicle.act()
             self.road.step(1 / self.config["simulation_frequency"])
@@ -131,6 +131,7 @@ class HighwayEnvAdvIDM(HighwayEnvAdv):
                 self._automatic_rendering()
 
         self.enable_auto_render = False
+
 
 class HighwayEnvAdvIDMFast(HighwayEnvAdvIDM):
     """

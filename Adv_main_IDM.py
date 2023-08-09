@@ -31,7 +31,7 @@ if __name__ == '__main__':
     BUFFER_SIZE = 100000
     BATCH_SIZE = 64
     SAVING_PER_EPISODE = 20
-    TRAIN = False
+    TRAIN = True
     TEST = True
 
     # create the environment
@@ -43,11 +43,12 @@ if __name__ == '__main__':
                 "type": "Kinematics",  # each vehicle on the road will return its own obs, with their own state in the first row
             }
         },
+        "ego_type": "highway_env.vehicle.behavior.DefensiveVehicle",
         "lanes_count": LANES_COUNT,  # the number of the lane
         "vehicles_count": VEHICLE_COUNT,  # the number of all the vehicle (ego and bvs)
         "controlled_vehicles": CONTROLLED_VEHICLE_COUNT,  # control all the vehicle (ego and bvs), now we control all the vehicle
         "duration": SIMULATION_TIME,  # simulation time [s]
-        "selected_BV_type": "highway_env.vehicle.behavior.AdvVehicle",  # change the bv behavior
+        "BV_type": "highway_env.vehicle.behavior.AdvVehicle",  # change the bv behavior
         "initial_lane_id": LANES_COUNT-1,  # the ego vehicle will be placed at the bottom lane (lane_id=1 means the top lane)
         "initial_bv_lane_id": LANES_COUNT-2,  # the init selected vehicle placed at different lane compared with ego
         "simulation_frequency": 15

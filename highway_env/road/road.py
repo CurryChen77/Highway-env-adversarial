@@ -322,7 +322,10 @@ class Road(object):
         objects_ = vehicles if vehicles_only else vehicles + obstacles
 
         if sort:
-            objects_ = sorted(objects_, key=lambda o: abs(vehicle.lane_distance_to(o)))
+            # the distance is calculated on the vehicle lane
+            # objects_ = sorted(objects_, key=lambda o: abs(vehicle.lane_distance_to(o)))
+            # the distance is calculated on all the lane
+            objects_ = sorted(objects_, key=lambda o: abs(np.linalg.norm(o.position - vehicle.position)))
         if count:
             objects_ = objects_[:count]
         return objects_

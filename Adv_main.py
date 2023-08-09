@@ -55,7 +55,7 @@ if __name__ == '__main__':
         "vehicles_count": VEHICLE_COUNT,  # the number of all the vehicle (ego and bvs)
         "controlled_vehicles": CONTROLLED_VEHICLE_COUNT,  # control all the vehicle (ego and bvs), now we control all the vehicle
         "duration": SIMULATION_TIME,  # simulation time [s]
-        "selected_BV_type": "highway_env.vehicle.behavior.AdvVehicle",  # change the bv behavior
+        "BV_type": "highway_env.vehicle.behavior.AdvVehicle",  # change the bv behavior
         "initial_lane_id": LANES_COUNT-1,  # the ego vehicle will be placed at the bottom lane (lane_id=1 means the top lane)
         "initial_bv_lane_id": LANES_COUNT-2,  # the init selected vehicle placed at different lane compared with ego
         "simulation_frequency": 15

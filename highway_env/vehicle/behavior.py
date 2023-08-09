@@ -487,9 +487,27 @@ class DefensiveVehicle(LinearVehicle):
 
 
 class AdvVehicle(IDMVehicle):
+    def __init__(self,
+                 road: Road,
+                 position: Vector,
+                 heading: float = 0,
+                 speed: float = 0,
+                 target_lane_index: int = None,
+                 target_speed: float = None,
+                 route: Route = None,
+                 enable_lane_change: bool = True,
+                 timer: float = None):
+        super().__init__(road, position, heading, speed, target_lane_index, target_speed, route)
+
+    # TODO high level bv action
+    # the action of BVs are high level action like "FASTER", "LANE_RIGHT", "LANE_LEFT"
+    def adv_act(self, bv_action: Union[dict, str, tuple] = None):
+        # bv_action is a str
+        super(IDMVehicle, self).act(bv_action)  # using the ControlledVehicle.act() to perform high level action
+
     # TODO IDM-based bv action
     # the action of BVs are continous acc and steering over IDM output
-    # def act(self, bv_action: Union[dict, str, tuple] = None):
+    # def adv_act(self, bv_action: Union[dict, str, tuple] = None):
     #     """
     #     Execute an action.
     #
@@ -529,10 +547,4 @@ class AdvVehicle(IDMVehicle):
     #     action['steering'] += adv_steering
     #
     #     Vehicle.act(self, action)  # Skip ControlledVehicle.act(), or the command will be overriden.
-
-    # TODO high level bv action
-    # the action of BVs are high level action like "FASTER", "LANE_RIGHT", "LANE_LEFT"
-    def act(self, bv_action: Union[dict, str, tuple] = None):
-        # bv_action is a str
-        super(IDMVehicle, self).act(bv_action)  # using the ControlledVehicle.act() to perform high level action
 

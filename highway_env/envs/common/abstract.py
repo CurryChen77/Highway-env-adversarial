@@ -240,9 +240,10 @@ class AbstractEnv(gym.Env):
             ego_action = action.ego_action
         else:
             ego_action = action
-
+        # the obs of the former selected bv
         previous_obs = self.observation_type.observe()
         if type(action) == VehicleAction:
+            # update the selected bv and get corresponding obs
             self.update_obs()
             updated_obs = self.observation_type.observe()
             obs = [previous_obs, updated_obs]
