@@ -4,15 +4,15 @@ from stable_baselines3 import DQN
 from collections import namedtuple
 
 
-TRAIN = False
+TRAIN = True
 
 if __name__ == '__main__':
     # Create the environment
     env = gym.make("highway-v0", render_mode="rgb_array")
     env.configure({
         "lanes_count": 2,  # the number of the lane
-        "vehicles_count": 2,  # the number of background vehicle
-        "duration": 8,  # [s]
+        "vehicles_count": 20,  # the number of background vehicle
+        "duration": 50,  # [s]
         "other_vehicles_type": "highway_env.vehicle.behavior.IDMVehicle",  # the behavior of the bv is IDM
         "initial_lane_id": 1
     })
