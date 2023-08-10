@@ -58,7 +58,6 @@ if __name__ == '__main__':
     action_dim = len(Bv_Action)
     USE_CUDA = torch.cuda.is_available()
 
-
     # Train
     if args.train:
         log_dir = f"./AdvLogs/{Ego_model_name}"
@@ -92,8 +91,8 @@ if __name__ == '__main__':
                 action = VehicleAction(ego_action=ego_action, bv_action=bv_action)
                 # step
                 obs_list, reward, done, truncated, info = env.step(action)
-                # bv reward
-                bv_reward = -1. * reward  # try to minimize the reward of ego car and the selected not crashed
+                # bv reward shaping, original reward -> [0,1]  -reward -> [-1,0] -reward+1 -> [0,1]
+                bv_reward = (-1. * reward) + 1
                 former_obs = obs_list[0]  # the obs from the unchanged selected bv
                 updated_obs = obs_list[1]  # the obs from updated selected bv
 

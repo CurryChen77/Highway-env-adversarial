@@ -170,14 +170,14 @@ class HighwayEnvAdv(HighwayEnv):
 
         reward = sum(self.config.get(name, 0) * reward for name, reward in rewards.items())
         bv_reward = self.bv_reward(bv_action)  # the reward of selected bv
+        reward = reward + bv_reward
         if self.config["normalize_reward"]:
             reward = utils.lmap(reward,
                                 [self.config["collision_reward"],
-                                 self.config["high_speed_reward"] + self.config["right_lane_reward"]],
+                                 self.config["high_speed_reward"] + self.config["right_lane_reward"] + 1],
                                 [0, 1])
-        reward *= rewards['on_road_reward']
+        reward *= rewards['on_road_reward']  # the reward is with in range [0, 1]
 
-        reward = reward + bv_reward
         return reward
 
     def bv_reward(self, bv_action):
