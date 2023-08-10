@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Time Retract RL')
     parser.add_argument('--Ego_model_name', type=str, default="DQN-Ego", help="the name of Ego model")
-    parser.add_argument('--render', type=bool, default=True, help="whether to display during the training")
+    parser.add_argument('--render', action='store_true', help="whether to display during the training")
     args = parser.parse_args()
     Ego_model_name = args.Ego_model_name
     print(f"******* Using {Ego_model_name} *******")
@@ -54,12 +54,11 @@ if __name__ == '__main__':
     state_dim = 5 * 5
     action_dim = len(Bv_Action)
     USE_CUDA = torch.cuda.is_available()
-    # Variable = lambda *args, **kwargs: autograd.Variable(*args, **kwargs).cuda() if USE_CUDA else autograd.Variable(
-    #     *args, **kwargs)
 
     current_model = RainbowDQN(state_dim, action_dim, config["num_atoms"], config["v_min"], config["v_max"], config["batch_size"], USE_CUDA)
     target_model = RainbowDQN(state_dim, action_dim, config["num_atoms"], config["v_min"], config["v_max"], config["batch_size"], USE_CUDA)
     if USE_CUDA:
+        print("******* Using CUDA *******")
         current_model = current_model.cuda()
         target_model = target_model.cuda()
     optimizer = optim.Adam(current_model.parameters(), config["learning_rate"])
@@ -107,7 +106,7 @@ if __name__ == '__main__':
                     env.render()
 
                 if len(replay_buffer) > config["batch_size"]:
-                    loss = compute_td_loss(replay_buffer, current_model, target_model, optimizer, config["batch_size"])
+                    loss = compute_td_loss(replay_buffer, current_model, target_model, optimizer, config["batch_size"], USE_CUDA)
                     losses.append(loss.item())
 
             if episode % config["update_per_episode"] == 0:

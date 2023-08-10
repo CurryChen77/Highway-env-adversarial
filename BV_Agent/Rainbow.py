@@ -141,6 +141,7 @@ class RainbowDQN(nn.Module):
         self.Vmin = Vmin
         self.Vmax = Vmax
         self.batch_size = batch_size
+        self.USE_CUDA = USE_CUDA
 
         self.linear1 = nn.Linear(num_inputs, 32)
         self.linear2 = nn.Linear(32, 64)
@@ -177,7 +178,10 @@ class RainbowDQN(nn.Module):
         self.noisy_advantage2.reset_noise()
 
     def act(self, state):
-        state = Variable(torch.FloatTensor(state.reshape(1, -1)).cuda())
+        if self.USE_CUDA:
+            state = Variable(torch.FloatTensor(state.reshape(1, -1)).cuda())
+        else:
+            state = Variable(torch.FloatTensor(state.reshape(1, -1)))
         dist = self.forward(state).data.cpu()
         dist = dist * torch.linspace(self.Vmin, self.Vmax, self.num_atoms)
         action = dist.sum(2).max(1)[1].numpy()[0]
@@ -237,11 +241,14 @@ def projection_distribution(next_state, rewards, dones, target_model, batch_size
     return proj_dist
 
 
-def compute_td_loss(replay_buffer, current_model, target_model, optimizer, batch_size, num_atoms=51):
+def compute_td_loss(replay_buffer, current_model, target_model, optimizer, batch_size, USE_CUDA, num_atoms=51):
     state, action, reward, next_state, done = replay_buffer.sample(batch_size)
-
-    state = torch.FloatTensor(np.float32(state.reshape(batch_size, -1))).cuda()
-    next_state = torch.FloatTensor(np.float32(next_state.reshape(batch_size, -1))).cuda()
+    if USE_CUDA:
+        state = torch.FloatTensor(np.float32(state.reshape(batch_size, -1))).cuda()
+        next_state = torch.FloatTensor(np.float32(next_state.reshape(batch_size, -1))).cuda()
+    else:
+        state = torch.FloatTensor(np.float32(state.reshape(batch_size, -1)))
+        next_state = torch.FloatTensor(np.float32(next_state.reshape(batch_size, -1)))
     action = Variable(torch.LongTensor(action))
     reward = torch.FloatTensor(reward)
     done = torch.FloatTensor(np.float32(done))
