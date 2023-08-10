@@ -28,7 +28,7 @@ def Env_config(Ego_model_name):
         "v_max": 10,
         "gamma": 0.99,
         "simulation_frequency": 15,
-        "update_per_episode": 10,
+        "update_per_episode": 100,
         "learning_rate": 0.001,
     }
     if Ego_model_name == "DQN-Ego":
