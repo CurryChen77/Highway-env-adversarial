@@ -19,6 +19,24 @@ pip install "stable-baselines3[extra]"
 ```
 python .\EgoAgent_trainer_DQN.py
 ```
+### Train the BV model
+* DQN-Ego
+```
+python Adv_main.py --Ego_model_name="DQN-Ego" --train
+```
+* IDM-EGO
+```
+python Adv_main.py --Ego_model_name="IDM-Ego" --train
+```
+### Test the BV model and rendering
+* DQN-Ego
+```
+python Adv_main.py --Ego_model_name="DQN-Ego" --test --render
+```
+* IDM-EGO
+```
+python Adv_main.py --Ego_model_name="IDM-Ego"  --test --render
+```
 ### Open the tensorboard
 * DQN as ego car
 ```
@@ -28,6 +46,10 @@ tensorboard --logdir=./AdvLogs/DQN-Ego
 ```
 tensorboard --logdir=./AdvLogs/IDM-Ego
 ```
+
+
+
+
 ## Environment: highway_env_adv
 ### 初始条件：
 1. 创建自车以及周车的初始位置[highway_env_adv](highway_env/envs/highway_env_adv.py)中的_create_vehicles()函数  

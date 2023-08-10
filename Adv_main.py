@@ -19,9 +19,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Time Retract RL')
     parser.add_argument('--Ego_model_name', type=str, default="DQN-Ego", help="the name of Ego model")
     parser.add_argument('--render', action='store_true', help="whether to display during the training")
+    parser.add_argument('--train', action='store_true', help="whether to display during the training")
+    parser.add_argument('--test', action='store_true', help="whether to display during the training")
     args = parser.parse_args()
     Ego_model_name = args.Ego_model_name
     print(f"******* Using {Ego_model_name} *******")
+    # load specific config
     config = Env_config(Ego_model_name)
 
     # create the environment
@@ -55,20 +58,22 @@ if __name__ == '__main__':
     action_dim = len(Bv_Action)
     USE_CUDA = torch.cuda.is_available()
 
-    current_model = RainbowDQN(state_dim, action_dim, config["num_atoms"], config["v_min"], config["v_max"], config["batch_size"], USE_CUDA)
-    target_model = RainbowDQN(state_dim, action_dim, config["num_atoms"], config["v_min"], config["v_max"], config["batch_size"], USE_CUDA)
-    if USE_CUDA:
-        print("******* Using CUDA *******")
-        current_model = current_model.cuda()
-        target_model = target_model.cuda()
-    optimizer = optim.Adam(current_model.parameters(), config["learning_rate"])
-    replay_buffer = ReplayBuffer(config["buffer_size"])
 
     # Train
-    if config["train"]:
+    if args.train:
         log_dir = f"./AdvLogs/{Ego_model_name}"
         writer = SummaryWriter(log_dir=log_dir)
-
+        current_model = RainbowDQN(state_dim, action_dim, config["num_atoms"], config["v_min"], config["v_max"],
+                                   config["batch_size"], USE_CUDA)
+        target_model = RainbowDQN(state_dim, action_dim, config["num_atoms"], config["v_min"], config["v_max"],
+                                  config["batch_size"], USE_CUDA)
+        if USE_CUDA:
+            print("******* Using CUDA *******")
+            current_model = current_model.cuda()
+            target_model = target_model.cuda()
+        optimizer = optim.Adam(current_model.parameters(), config["learning_rate"])
+        replay_buffer = ReplayBuffer(config["buffer_size"])
+        print("******* Starting Training *******")
         for episode in range(0, config["max_train_episode"]):
             done = truncated = False
             obs, info = env.reset()  # the obs is a tuple containing all the observations of the ego and bvs
@@ -119,14 +124,20 @@ if __name__ == '__main__':
             print(f"Episode: {episode + 1}, Reward: {episode_reward:.2f}, Losses: {sum(losses)}")
         env.close()
         writer.close()
-
     # Test
-    if config["test"]:
+    if args.test:
         env = RecordVideo(env, video_folder=f"BV_model/{Ego_model_name}/videos", episode_trigger=lambda e: True)
         env.unwrapped.set_record_video_wrapper(env)
         env.configure({"simulation_frequency": config["simulation_frequency"]})  # Higher FPS for rendering
         # load the trained bv_model
-        RainbowDQN = RainbowDQN.load(model_name=Ego_model_name)
+
+        BV_model = RainbowDQN(state_dim, action_dim, config["num_atoms"], config["v_min"], config["v_max"],
+                   config["batch_size"], USE_CUDA)
+        BV_model.load(model_name=Ego_model_name)
+        if USE_CUDA:
+            print("******* Using CUDA *******")
+            BV_model = BV_model.cuda()
+        print("******* Starting Testing *******")
         for episode in range(config["test_episode"]):
             done = truncated = False
             obs, info = env.reset()  # the obs is a tuple containing all the observations of the ego and bvs
@@ -134,7 +145,7 @@ if __name__ == '__main__':
                 # get ego action
                 ego_action = None
                 # get bv action
-                bv_action_idx = current_model.act(obs[1])
+                bv_action_idx = BV_model.act(obs[1])
                 bv_action = Bv_Action[bv_action_idx]  # bv_action is str type like "LANE_LEFT", "FASTER" and so on
                 # action of all vehicle
                 action = VehicleAction(ego_action=ego_action, bv_action=bv_action)

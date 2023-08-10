@@ -14,10 +14,10 @@ def Env_config(Ego_model_name):
     config = {
         "env_type": "highway-adv-v0",
         "bv_type": "highway_env.vehicle.behavior.AdvVehicle",
-        "vehicle_count": 20,
+        "vehicle_count": 12,
         "controlled_vehicle_count": 2,
         "lane_count": 2,
-        "simulation_time": 50,
+        "simulation_time": 40,
         "max_train_episode": int(1e4),
         "test_episode": 10,
         "buffer_size": int(1e5),
@@ -28,10 +28,8 @@ def Env_config(Ego_model_name):
         "v_max": 10,
         "gamma": 0.99,
         "simulation_frequency": 15,
-        "update_per_episode": 100,
+        "update_per_episode": 10,
         "learning_rate": 0.001,
-        "train": True,
-        "test": False
     }
     if Ego_model_name == "DQN-Ego":
         config.update({
