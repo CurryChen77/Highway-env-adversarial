@@ -34,6 +34,7 @@ class HighwayEnvAdv(HighwayEnv):
             "action": {
                 "type": "DiscreteMetaAction",
             },
+            "ego_type": None,
             "lanes_count": 4,
             "vehicles_count": 50,
             "controlled_vehicles": 1,
@@ -62,8 +63,7 @@ class HighwayEnvAdv(HighwayEnv):
         bv_type = utils.class_from_path(self.config["BV_type"])
         # other_per_controlled = near_split(self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"])
 
-        # [2,1] if total 3 vehicle on the road, and the first 2 is one ego and one selected bv, the second 1 is the rest bvs
-        other_vehicle_number = self.config["vehicles_count"]-self.config["controlled_vehicles"]
+        other_vehicle_number = self.config["vehicles_count"]-self.config["controlled_vehicles"]  # the rest normal bv
         self.controlled_vehicles = []
 
         # the controlled vehicle (ego and selected bv)
@@ -74,8 +74,14 @@ class HighwayEnvAdv(HighwayEnv):
             lane_id=self.config["initial_lane_id"],
             spacing=self.config["ego_spacing"]
         )
-        # the type of ego vehicle is MDPVehicle
-        vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+        if self.config["ego_type"] is not None:
+            # the ego car is IDM based
+            ego_type = utils.class_from_path(self.config["ego_type"])
+            vehicle = ego_type(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+        else:
+            # the ego car is MDPVehicle
+            vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+            self.action_type.controlled_vehicle = vehicle # set the ego vehicle as the controlled vehicle in action type
         self.controlled_vehicles.append(vehicle)  # contain the ego and the selected bv for observation
         self.road.vehicles.append(vehicle)
 
@@ -113,7 +119,10 @@ class HighwayEnvAdv(HighwayEnv):
             if ego_action is not None \
                     and not self.config["manual_control"] \
                     and self.steps % int(self.config["simulation_frequency"] // self.config["policy_frequency"]) == 0:
-                self.action_type.act(ego_action)  # self.controlled_vehicle.act() -> MDPVehicle.act(ego_action)
+                if self.config["ego_type"] is not None:
+                    self.controlled_vehicles[0].act(ego_action)  # IDM based vehicle act
+                else:
+                    self.action_type.act(ego_action)  # MDPVehicle act
 
             if bv_action:  # bv_action
                 # perform the selected bv action

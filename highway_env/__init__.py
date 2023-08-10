@@ -8,17 +8,6 @@ from gymnasium.envs.registration import register
 
 def register_highway_envs():
     """Import the envs module so that envs register themselves."""
-    # highway_env_advIDM.py
-    register(
-        id='highway-adv-IDM-v0',
-        entry_point='highway_env.envs:HighwayEnvAdvIDM',
-    )
-
-    register(
-        id='highway-adv-IDM-fast-v0',
-        entry_point='highway_env.envs:HighwayEnvAdvIDMFast',
-    )
-
     # highway_env_adv.py
     register(
         id='highway-adv-v0',

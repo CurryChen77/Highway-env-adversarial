@@ -1,5 +1,4 @@
 from highway_env.envs.highway_env_adv import *
-from highway_env.envs.highway_env_adv_IDM import *
 from highway_env.envs.highway_env import *
 from highway_env.envs.merge_env import *
 from highway_env.envs.parking_env import *
