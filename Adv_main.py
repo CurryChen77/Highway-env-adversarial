@@ -150,7 +150,10 @@ if __name__ == '__main__':
             obs, info = env.reset()  # the obs is a tuple containing all the observations of the ego and bvs
             while not (done or truncated):
                 # get ego action
-                ego_action = None
+                if Ego_model_name == "DQN-Ego":
+                    ego_action = ego_model.predict(obs[0], deterministic=True)[0]  # the first obs is the ego obs
+                else:
+                    ego_action = None
                 # get bv action
                 bv_action_idx = BV_Agent.select_action(obs[1].reshape(-1, state_dim))
                 bv_action = Bv_Action[int(bv_action_idx)]  # bv_action is str type like "LANE_LEFT", "FASTER" and so on
