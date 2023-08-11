@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--render', action='store_true', help="whether to display during the training")
     parser.add_argument('--train', action='store_true', help="whether to display during the training")
     parser.add_argument('--test', action='store_true', help="whether to display during the training")
-    parser.add_argument('--saving', type=int, default=20, help="whether to display during the training")
+    parser.add_argument('--saving', type=int, default=100, help="whether to display during the training")
     args = parser.parse_args()
     Ego_model_name = args.Ego_model_name
     print(f"******* Using {Ego_model_name} *******")
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         log_dir = f"./AdvLogs/{Ego_model_name}"
         writer = SummaryWriter(log_dir=log_dir)
         BV_Agent = RainbowDQN(memory_size=config["buffer_size"], batch_size=config["batch_size"],
-                                   target_update=config["update_per_episode"], obs_dim=state_dim, action_dim=action_dim)
+                              target_update=config["update_per_frame"], obs_dim=state_dim, action_dim=action_dim)
 
         print("******* Starting Training *******")
         frame_idx = 0
@@ -142,7 +142,7 @@ if __name__ == '__main__':
         # load the trained bv_model
 
         BV_Agent = RainbowDQN(memory_size=config["buffer_size"], batch_size=config["batch_size"],
-                                   target_update=config["update_per_episode"], obs_dim=state_dim, action_dim=action_dim)
+                                   target_update=config["update_per_frame"], obs_dim=state_dim, action_dim=action_dim)
         BV_Agent.load(model_name=Ego_model_name)
         print("******* Starting Testing *******")
         for episode in range(config["test_episode"]):

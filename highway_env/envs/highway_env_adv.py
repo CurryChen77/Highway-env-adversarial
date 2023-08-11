@@ -44,12 +44,13 @@ class HighwayEnvAdv(HighwayEnv):
             "ego_spacing": 2,
             "selected_bv_spacing": 3,
             "vehicles_density": 1,
-            "collision_reward": -1,    # The reward received when colliding with a vehicle.
-            "right_lane_reward": 0.1,  # The reward received when driving on the right-most lanes, linearly mapped to
-                                       # zero for other lanes.
-            "high_speed_reward": 0.4,  # The reward received when driving at full speed, linearly mapped to zero for
-                                       # lower speeds according to config["reward_speed_range"].
-            "lane_change_reward": 0,   # The reward received at each lane change action.
+            "collision_reward": -1,      # The reward received when colliding with a vehicle.
+            "right_lane_reward": 0.1,    # The reward received when driving on the right-most lanes, linearly mapped to
+                                         # zero for other lanes.
+            "high_speed_reward": 0.4,    # The reward received when driving at full speed, linearly mapped to zero for
+                                         # lower speeds according to config["reward_speed_range"].
+            "lane_change_reward": 0,     # The reward received at each lane change action.
+            "bv_collision_reward": 0.5,  # The selected bv should not collide with other bv, but collide with ego
             "reward_speed_range": [20, 30],
             "normalize_reward": True,
             "offroad_terminal": False,
@@ -158,7 +159,7 @@ class HighwayEnvAdv(HighwayEnv):
             self.observation_type.agents_observation_types[1].observer_vehicle = self.selected_bv
 
 
-    def _reward(self, action: Action) -> float:
+    def _reward(self, action: VehicleAction) -> float:
         """
         The reward is defined to foster driving at high speed, on the rightmost lanes, and to avoid collisions.
         :param action: the last action performed
@@ -167,14 +168,13 @@ class HighwayEnvAdv(HighwayEnv):
         ego_action = VehicleAction.ego_action
         bv_action = VehicleAction.bv_action
         rewards = self._rewards(ego_action)  # calculate the reward of the ego agent
-
-        reward = sum(self.config.get(name, 0) * reward for name, reward in rewards.items())
         bv_reward = self.bv_reward(bv_action)  # the reward of selected bv
-        reward = reward + bv_reward
+        rewards.update({"bv_collision_reward": bv_reward})
+        reward = sum(self.config.get(name, 0) * reward for name, reward in rewards.items())
         if self.config["normalize_reward"]:
             reward = utils.lmap(reward,
                                 [self.config["collision_reward"],
-                                 self.config["high_speed_reward"] + self.config["right_lane_reward"] + 1],
+                                 self.config["high_speed_reward"] + self.config["right_lane_reward"] + self.config["bv_collision_reward"]],
                                 [0, 1])
         reward *= rewards['on_road_reward']  # the reward is with in range [0, 1]
 
