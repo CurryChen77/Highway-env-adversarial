@@ -21,11 +21,13 @@ if __name__ == '__main__':
     parser.add_argument('--render', action='store_true', help="whether to display during the training")
     parser.add_argument('--train', action='store_true', help="whether to display during the training")
     parser.add_argument('--test', action='store_true', help="whether to display during the training")
+    parser.add_argument('--saving', type=int, default=20, help="whether to display during the training")
     args = parser.parse_args()
     Ego_model_name = args.Ego_model_name
     print(f"******* Using {Ego_model_name} *******")
     # load specific config
     config = Env_config(Ego_model_name)
+    config.update({"saving_model_per_episode": args.saving})
 
     # create the environment
     env = gym.make(config["env_type"], render_mode="rgb_array")

@@ -22,7 +22,7 @@ def Env_config(Ego_model_name):
         "test_episode": 10,
         "buffer_size": int(1e5),
         "batch_size": 64,
-        "saving_model_per_episode": 500,
+        "saving_model_per_episode": 50,
         "num_atoms": 51,
         "v_min": -10,
         "v_max": 10,

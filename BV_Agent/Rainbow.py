@@ -695,21 +695,11 @@ class RainbowDQN:
     def save(self, model_name):
         os.makedirs(f"./BV_model/{model_name}", exist_ok=True)
         # 保存模型参数
-        torch.save(self.linear1.state_dict(), f"./BV_model/{model_name}/RainbowDQN-linear1.pth")
-        torch.save(self.linear2.state_dict(), f"./BV_model/{model_name}/RainbowDQN-linear2.pth")
-        torch.save(self.noisy_value1.state_dict(), f"./BV_model/{model_name}/RainbowDQN-noisy_value1.pth")
-        torch.save(self.noisy_value2.state_dict(), f"./BV_model/{model_name}/RainbowDQN-noisy_value2.pth")
-        torch.save(self.noisy_advantage1.state_dict(), f"./BV_model/{model_name}/RainbowDQN-noisy_advantage1.pth")
-        torch.save(self.noisy_advantage2.state_dict(), f"./BV_model/{model_name}/RainbowDQN-noisy_advantage2.pth")
+        torch.save(self.dqn.state_dict(), f"./BV_model/{model_name}/RainbowDQN.pth")
         print("Successfully save the model")
 
     def load(self, model_name):
         # 创建RainbowDQN代理并加载策略网络和Q网络的模型参数
-        self.linear1.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-linear1.pth"))
-        self.linear2.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-linear2.pth"))
-        self.noisy_value1.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-noisy_value1.pth"))
-        self.noisy_value2.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-noisy_value2.pth"))
-        self.noisy_advantage1.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-noisy_advantage1.pth"))
-        self.noisy_advantage2.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-noisy_advantage2.pth"))
+        self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN.pth"))
         print("--------Successfully load the model--------")
 
