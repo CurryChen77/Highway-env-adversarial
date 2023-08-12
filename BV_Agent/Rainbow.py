@@ -13,6 +13,8 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 from typing import Deque, Dict, List, Tuple
 from BV_Agent.segment_tree import MinSegmentTree, SumSegmentTree
+from config import Bv_Action
+from highway_env.envs.common.action import VehicleAction
 
 
 class NoisyLinear(nn.Module):
@@ -407,12 +409,13 @@ class RainbowDQN:
 
     def __init__(
             self,
+            env,
             memory_size: int,
             batch_size: int,
             target_update: int,
             obs_dim: int,
             action_dim: int,
-            seed=777,
+            seed: int = 777,
             gamma: float = 0.99,
             # PER parameters
             alpha: float = 0.2,
@@ -442,7 +445,8 @@ class RainbowDQN:
             atom_size (int): the unit number of support
             n_step (int): step number to calculate n-step td error
         """
-
+        self.env = env
+        self.state_dim = obs_dim
         self.batch_size = batch_size
         self.target_update = target_update
         self.seed = seed
@@ -453,7 +457,7 @@ class RainbowDQN:
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        print(self.device)
+        print("Using device: ",self.device)
 
         # PER
         # memory for 1-step Learning
@@ -511,13 +515,16 @@ class RainbowDQN:
 
         return selected_action
 
-    def step(self, action: np.ndarray) -> Tuple[np.ndarray, np.float64, bool]:
+    def step(self, action):
         """Take an action and return the response of the env."""
         next_state, reward, terminated, truncated, _ = self.env.step(action)
         done = terminated or truncated
+        bv_reward = (-1. * reward) + 1
+        former_obs = next_state[0]  # the obs from the unchanged selected bv
+        updated_obs = next_state[1]  # the obs from updated selected bv
 
         if not self.is_test:
-            self.transition += [reward, next_state, done]
+            self.transition += [bv_reward, former_obs[1].reshape(-1, self.state_dim), done]
 
             # N-step transition
             if self.use_n_step:
@@ -530,7 +537,7 @@ class RainbowDQN:
             if one_step_transition:
                 self.memory.store(*one_step_transition)
 
-        return next_state, reward, done
+        return updated_obs, bv_reward, done
 
     def update_model(self) -> torch.Tensor:
         """Update the model by gradient descent."""
@@ -575,7 +582,7 @@ class RainbowDQN:
 
         return loss.item()
 
-    def train(self, num_frames: int, plotting_interval: int = 200):
+    def train(self,num_frames, ego_model, writer, args, config, print_interval=100):
         """Train the agent."""
         self.is_test = False
 
@@ -586,7 +593,15 @@ class RainbowDQN:
         score = 0
 
         for frame_idx in range(1, num_frames + 1):
-            action = self.select_action(state)
+            if ego_model is not None:
+                ego_action = ego_model.predict(state[0], deterministic=True)[0]  # the first obs is the ego obs
+            else:
+                ego_action = None
+            # get bv action
+            bv_action_idx = self.select_action(state[1].reshape(-1, self.state_dim))
+            bv_action = Bv_Action[int(bv_action_idx)]  # bv_action is str type like "LANE_LEFT", "FASTER" and so on
+            # action of all vehicle
+            action = VehicleAction(ego_action=ego_action, bv_action=bv_action)
             next_state, reward, done = self.step(action)
 
             state = next_state
@@ -598,49 +613,66 @@ class RainbowDQN:
             fraction = min(frame_idx / num_frames, 1.0)
             self.beta = self.beta + fraction * (1.0 - self.beta)
 
+            writer.add_scalar("Reward", (score), frame_idx)
+
             # if episode ends
             if done:
                 state, _ = self.env.reset(seed=self.seed)
                 scores.append(score)
                 score = 0
 
+            if args.render:
+                self.env.render()
+
             # if training is ready
             if len(self.memory) >= self.batch_size:
                 loss = self.update_model()
                 losses.append(loss)
+                writer.add_scalar("Loss", loss, frame_idx)
+                if frame_idx % print_interval == 0:
+                    print(f"Frame: {frame_idx + 1}, Reward: {score:.2f}, Loss: {loss}")
+
                 update_cnt += 1
 
                 # if hard update is needed
                 if update_cnt % self.target_update == 0:
                     self._target_hard_update()
 
+            if frame_idx % config["saving_model_per_frame"] == 0 and frame_idx != 0:
+                self.save(model_name=args.Ego, frame=frame_idx)
 
+
+        writer.close()
         self.env.close()
 
-    def test(self, video_folder: str) -> None:
+    def test(self, ego_model, args, config) -> None:
         """Test the agent."""
         self.is_test = True
 
-        # for recording a video
-        naive_env = self.env
-        self.env = gym.wrappers.RecordVideo(self.env, video_folder=video_folder)
+        for episode in range(config["test_frame"]):
+            score = 0
+            done = False
+            state, _ = self.env.reset()
+            while not done:
+                if ego_model is not None:
+                    ego_action = ego_model.predict(state[0], deterministic=True)[0]  # the first obs is the ego obs
+                else:
+                    ego_action = None
+                # get bv action
+                bv_action_idx = self.select_action(state[1].reshape(-1, self.state_dim))
+                bv_action = Bv_Action[int(bv_action_idx)]  # bv_action is str type like "LANE_LEFT", "FASTER" and so on
+                # action of all vehicle
+                action = VehicleAction(ego_action=ego_action, bv_action=bv_action)
+                next_state, reward, done = self.step(action)
 
-        state, _ = self.env.reset(seed=self.seed)
-        done = False
-        score = 0
+                state = next_state
+                score += reward
 
-        while not done:
-            action = self.select_action(state)
-            next_state, reward, done = self.step(action)
+                if args.render:
+                    self.env.render()
 
-            state = next_state
-            score += reward
-
-        print("score: ", score)
+            print("score: ", score)
         self.env.close()
-
-        # reset
-        self.env = naive_env
 
     def _compute_dqn_loss(self, samples: Dict[str, np.ndarray], gamma: float) -> torch.Tensor:
         """Return categorical dqn loss."""
@@ -693,22 +725,25 @@ class RainbowDQN:
         """Hard update: target <- local."""
         self.dqn_target.load_state_dict(self.dqn.state_dict())
 
-    def save(self, model_name, episode):
+    def save(self, model_name, frame):
         os.makedirs(f"./BV_model/{model_name}", exist_ok=True)
         # save the parameters
-        torch.save(self.dqn.state_dict(), f"./BV_model/{model_name}/RainbowDQN-{episode}.pth")
+        torch.save(self.dqn.state_dict(), f"./BV_model/{model_name}/RainbowDQN-{frame}.pth")
         print("Successfully saving the model")
 
-    def load(self, model_name, episode=None):
+    def load(self, model_name, frame=None):
         # load the dqn network
-        if episode is not None:
-            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{episode}.pth"))
-            print(f"--------Successfully loading RainbowDQN-{episode}.pth--------")
+        if frame is not None:
+            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{frame}.pth"))
+            print(f"--------Successfully loading RainbowDQN-{frame}.pth--------")
         else:
-            file_names = os.listdir(f"./BV_model/{model_name}/")
-            matching_files = [file for file in file_names if file.startswith("RainbowDQN-")]
-            matching_files.sort(key=lambda x: (int(re.split('RainbowDQN-|.pth',x)[1])))
-            latest_model_name = matching_files[-1]
-            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/{latest_model_name}"))
-            print(f"--------Successfully loading the latest model {latest_model_name}--------")
+            try:
+                file_names = os.listdir(f"./BV_model/{model_name}/")
+                matching_files = [file for file in file_names if file.startswith("RainbowDQN-")]
+                matching_files.sort(key=lambda x: (int(re.split('RainbowDQN-|.pth',x)[1])))
+                latest_model_name = matching_files[-1]
+                self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/{latest_model_name}"))
+                print(f"--------Successfully loading the latest model {latest_model_name}--------")
+            except IndexError:
+                print("Can't find any trained model")
 

@@ -42,6 +42,7 @@ class HighwayEnvAdv(HighwayEnv):
             "initial_bv_lane_id": None,
             "duration": 40,  # [s]
             "ego_spacing": 2,
+            "ego_target_speed": 28,
             "selected_bv_spacing": 3,
             "vehicles_density": 1,
             "collision_reward": -1,      # The reward received when colliding with a vehicle.
@@ -78,7 +79,8 @@ class HighwayEnvAdv(HighwayEnv):
         if self.config["ego_type"] is not None:
             # the ego car is IDM based
             ego_type = utils.class_from_path(self.config["ego_type"])
-            vehicle = ego_type(self.road, vehicle.position, vehicle.heading, vehicle.speed)
+            vehicle = ego_type(self.road, vehicle.position, vehicle.heading, vehicle.speed,
+                               target_speed=self.config["ego_target_speed"])
         else:
             # the ego car is MDPVehicle
             vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
