@@ -3,6 +3,7 @@ import os
 from collections import deque
 from torch.nn.utils import clip_grad_norm_
 import gym
+import re
 import numpy as np
 from torch.autograd import Variable
 import torch
@@ -692,14 +693,22 @@ class RainbowDQN:
         """Hard update: target <- local."""
         self.dqn_target.load_state_dict(self.dqn.state_dict())
 
-    def save(self, model_name):
+    def save(self, model_name, episode):
         os.makedirs(f"./BV_model/{model_name}", exist_ok=True)
-        # 保存模型参数
-        torch.save(self.dqn.state_dict(), f"./BV_model/{model_name}/RainbowDQN.pth")
-        print("Successfully save the model")
+        # save the parameters
+        torch.save(self.dqn.state_dict(), f"./BV_model/{model_name}/RainbowDQN-{episode}.pth")
+        print("Successfully saving the model")
 
-    def load(self, model_name):
-        # 创建RainbowDQN代理并加载策略网络和Q网络的模型参数
-        self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN.pth"))
-        print("--------Successfully load the model--------")
+    def load(self, model_name, episode=None):
+        # load the dqn network
+        if episode is not None:
+            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{episode}.pth"))
+            print(f"--------Successfully loading RainbowDQN-{episode}.pth--------")
+        else:
+            file_names = os.listdir(f"./BV_model/{model_name}/")
+            matching_files = [file for file in file_names if file.startswith("RainbowDQN-")]
+            matching_files.sort(key=lambda x: (int(re.split('RainbowDQN-|.pth',x)[1])))
+            latest_model_name = matching_files[-1]
+            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/{latest_model_name}"))
+            print(f"--------Successfully loading the latest model {latest_model_name}--------")
 

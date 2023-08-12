@@ -1,6 +1,6 @@
 # -*-coding: utf-8 -*-
 import argparse
-
+import numpy as np
 import gymnasium as gym
 import torch
 from gymnasium.wrappers import RecordVideo
@@ -19,9 +19,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Time Retract RL')
     parser.add_argument('--Ego_model_name', type=str, default="DQN-Ego", help="the name of Ego model")
     parser.add_argument('--render', action='store_true', help="whether to display during the training")
-    parser.add_argument('--train', action='store_true', help="whether to display during the training")
-    parser.add_argument('--test', action='store_true', help="whether to display during the training")
-    parser.add_argument('--saving', type=int, default=100, help="whether to display during the training")
+    parser.add_argument('--train', action='store_true', help="whether to train")
+    parser.add_argument('--test', action='store_true', help="whether to test")
+    parser.add_argument('--saving', type=int, default=100, help="saving per episode")
+    parser.add_argument('--loading_episode', type=int, default=None, help="load specific trained model")
     args = parser.parse_args()
     Ego_model_name = args.Ego_model_name
     print(f"******* Using {Ego_model_name} *******")
@@ -73,7 +74,7 @@ if __name__ == '__main__':
         for episode in range(0, config["max_train_episode"]):
             done = truncated = False
             obs, info = env.reset()  # the obs is a tuple containing all the observations of the ego and bvs
-            episode_reward = 0
+            episode_reward = []
             losses = []
             while not (done or truncated):
                 # get ego action
@@ -111,7 +112,7 @@ if __name__ == '__main__':
                 BV_Agent.beta = BV_Agent.beta + fraction * (1.0 - BV_Agent.beta)
                 # update the obs
                 obs = updated_obs
-                episode_reward += bv_reward
+                episode_reward.append(bv_reward)
                 # break
                 if done or truncated:
                     break
@@ -126,12 +127,12 @@ if __name__ == '__main__':
                     if update_cnt % BV_Agent.target_update == 0:
                         BV_Agent._target_hard_update()
 
-            writer.add_scalar("Reward", episode_reward, episode)
-            writer.add_scalar("Loss", sum(losses), episode)
+            writer.add_scalar("Reward", np.mean(episode_reward), episode)
+            writer.add_scalar("Loss", np.mean(losses), episode)
             # save the model per specific episode
             if episode % config["saving_model_per_episode"] == 0 and episode != 0:
-                BV_Agent.save(model_name=Ego_model_name)
-            print(f"Episode: {episode + 1}, Reward: {episode_reward:.2f}, Losses: {sum(losses)}")
+                BV_Agent.save(model_name=Ego_model_name, episode=episode)
+            print(f"Episode: {episode + 1}, Reward: {np.mean(episode_reward):.2f}, Losses: {np.mean(losses)}")
         env.close()
         writer.close()
     # Test
@@ -142,8 +143,8 @@ if __name__ == '__main__':
         # load the trained bv_model
 
         BV_Agent = RainbowDQN(memory_size=config["buffer_size"], batch_size=config["batch_size"],
-                                   target_update=config["update_per_frame"], obs_dim=state_dim, action_dim=action_dim)
-        BV_Agent.load(model_name=Ego_model_name)
+                              target_update=config["update_per_frame"], obs_dim=state_dim, action_dim=action_dim)
+        BV_Agent.load(model_name=Ego_model_name, episode=args.loading_episode)
         print("******* Starting Testing *******")
         for episode in range(config["test_episode"]):
             done = truncated = False
