@@ -639,7 +639,7 @@ class RainbowDQN:
                     self._target_hard_update()
 
             if frame_idx % config["saving_model_per_frame"] == 0 and frame_idx != 0:
-                self.save(model_name=args.Ego, frame=frame_idx)
+                self.save(args=args, frame=frame_idx)
 
 
         writer.close()
@@ -725,22 +725,22 @@ class RainbowDQN:
         """Hard update: target <- local."""
         self.dqn_target.load_state_dict(self.dqn.state_dict())
 
-    def save(self, model_name, frame):
-        os.makedirs(f"./BV_model/{model_name}", exist_ok=True)
+    def save(self, args, frame):
+        os.makedirs(f"./BV_model/{args.Ego}", exist_ok=True)
         # save the parameters
-        torch.save(self.dqn.state_dict(), f"./BV_model/{model_name}/RainbowDQN-{frame}.pth")
+        torch.save(self.dqn.state_dict(), f"./BV_model/{args.Ego}/RainbowDQN-{args.lane_count}lanes-{frame}.pth")
         print("Successfully saving the model")
 
-    def load(self, model_name, frame=None):
+    def load(self, model_name, frame=None, lane_count=2):
         # load the dqn network
         if frame is not None:
-            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{frame}.pth"))
+            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-{frame}.pth"))
             print(f"--------Successfully loading RainbowDQN-{frame}.pth--------")
         else:
             try:
                 file_names = os.listdir(f"./BV_model/{model_name}/")
-                matching_files = [file for file in file_names if file.startswith("RainbowDQN-")]
-                matching_files.sort(key=lambda x: (int(re.split('RainbowDQN-|.pth',x)[1])))
+                matching_files = [file for file in file_names if file.startswith(f"RainbowDQN-{lane_count}lanes")]
+                matching_files.sort(key=lambda x: (int(re.split('-|.pth',x)[-2])))
                 latest_model_name = matching_files[-1]
                 self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/{latest_model_name}"))
                 print(f"--------Successfully loading the latest model {latest_model_name}--------")

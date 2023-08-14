@@ -1,13 +1,68 @@
 # Highway-env based adversarial testing
 ## 1. Visualization
+
+### DQN Ego
+
+* 2 lanes
+
 <table>
     <tr>
-        <td ><center><img src="image/cut-in.gif">Cut in scenario </center></td>
-        <td ><center><img src="image/slow-down.gif">Slow down scenario</center></td>
+        <td ><center><img src="image/DQN-Ego-2lanes-brake.gif">Emergency brake </center></td>
+        <td ><center><img src="image/DQN-Ego-2lanes-crashed.gif">Rear-end collision</center></td>
+    </tr>
+</table>
+
+* 3 lanes
+
+<table>
+    <tr>
+        <td ><center><img src="image/DQN-Ego-3lanes-cut-in1.gif">Cut in</center></td>
+        <td ><center><img src="image/DQN-Ego-3lanes-cut-in2.gif">Cut in</center></td>
+    </tr>
+</table>
+
+### IDM Ego
+
+* 2 lanes
+
+<table>
+    <tr>
+        <td ><center><img src="image/IDM-Ego-2lanes-crashed.gif">Crashed</center></td>
+        <td ><center><img src="image/IDM-Ego-2lanes-cut-in.gif">Cut in</center></td>
+    </tr>
+</table>
+
+* 3 lanes
+
+<table>
+    <tr>
+        <td ><center><img src="image/IDM-Ego-3lanes-cut-in.gif">Cut in</center></td>
+        <td ><center><img src="image/IDM-Ego-3lanes-surroundcrash.gif">Crashed</center></td>
+    </tr>
+</table>
+
+## Training losses and reward
+
+* DQN Ego
+
+<table>
+    <tr>
+        <td ><center><img src="AdvLogs/DQN-Ego-2lanes-10000-losses.png">2 lanes</center></td>
+        <td ><center><img src="AdvLogs/DQN-Ego-3lanes-10000-losses.png">3 lanes</center></td>
+    </tr>
+</table>
+
+* IDM Ego
+
+<table>
+    <tr>
+        <td ><center><img src="AdvLogs/IDM-Ego-2lanes-10000-losses.png">2 lanes</center></td>
+        <td ><center><img src="AdvLogs/IDM-Ego-3lanes-10000-losses.png">3 lanes</center></td>
     </tr>
 </table>
 
 ## 2. Usage
+
 ### 1. Install highway-adv-env
 ```
 python setup.py install
@@ -29,29 +84,47 @@ python EgoAgent_trainer_DQN.py
 ### 4. Train the BV model with different Ego agent
 - DQN-Ego
 ```
-python Adv_main.py --Ego_model_name="DQN-Ego" --train
+python Adv_main.py --Ego="DQN-Ego" --train
 ```
 - IDM-EGO
 ```
-python Adv_main.py --Ego_model_name="IDM-Ego" --train
+python Adv_main.py --Ego="IDM-Ego" --train
 ```
+**default: 2 lanes**
+
+Can be changed by  **--lane_count**
+
+```
+python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3
+```
+
 ### 5. Test the BV model and rendering
+
 - DQN-Ego
 ```
-python Adv_main.py --Ego_model_name="DQN-Ego" --test --render
+python Adv_main.py --Ego="DQN-Ego" --test --render
 ```
 - IDM-EGO
 ```
-python Adv_main.py --Ego_model_name="IDM-Ego"  --test --render
+python Adv_main.py --Ego="IDM-Ego"  --test --render
 ```
+**default: 2 lanes**
+
+Can be changed by  **--lane_count**
+
+```
+python Adv_main.py --Ego="DQN-Ego" --test --render --lane_count=3
+```
+
 ### 6. Open the tensorboard
+
 - DQN as ego car
 ```
-tensorboard --logdir=./AdvLogs/DQN-Ego
+tensorboard --logdir=./AdvLogs/DQN-Ego-3lanes
 ```
 - IDM as ego car
 ```
-tensorboard --logdir=./AdvLogs/IDM-Ego
+tensorboard --logdir=./AdvLogs/IDM-Ego-3lanes
 ```
 ## 3. Environment: highway_env_adv
 ### 1. Initial condition of all the vehicles：

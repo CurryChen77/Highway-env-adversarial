@@ -4,8 +4,7 @@ build/
 dist/
 scripts/
 highway_dqn/videos
-*DQN-Ego
-*IDM-Ego
+
 
 
 # Setup

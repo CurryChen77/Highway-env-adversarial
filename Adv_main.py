@@ -25,12 +25,16 @@ if __name__ == '__main__':
     parser.add_argument('--test', action='store_true', help="whether to test")
     parser.add_argument('--saving', type=int, default=1000, help="saving per episode")
     parser.add_argument('--loading_frame', type=int, default=None, help="load specific trained model")
+    parser.add_argument('--lane_count', type=int, default=2, help="the lane_count of the scenario")
+    parser.add_argument('--max_train_frame', type=int, default=int(1e4), help="the maxing training frames")
     args = parser.parse_args()
     Ego = args.Ego
     print(f"******* Using {Ego} *******")
     # load specific config
     config = Env_config(Ego)
-    config.update({"saving_model_per_frame": args.saving})
+    config.update({"saving_model_per_frame": args.saving,
+                   "lane_count": args.lane_count,
+                   "max_train_frame": args.max_train_frame})
 
     # create the environment
     env = gym.make(config["env_type"], render_mode="rgb_array")
@@ -67,7 +71,7 @@ if __name__ == '__main__':
 
     # Train
     if args.train:
-        log_dir = f"./AdvLogs/{Ego}"
+        log_dir = f"./AdvLogs/{Ego}-{args.lane_count}lanes"
         writer = SummaryWriter(log_dir=log_dir)
         BV_Agent = RainbowDQN(env=env, memory_size=config["buffer_size"], batch_size=config["batch_size"],
                               target_update=config["update_per_frame"], obs_dim=state_dim,
@@ -79,7 +83,7 @@ if __name__ == '__main__':
 
     # Test
     if args.test:
-        env = RecordVideo(env, video_folder=f"BV_model/{Ego}/videos", episode_trigger=lambda e: True)
+        env = RecordVideo(env, video_folder=f"BV_model/{Ego}/{args.lane_count}lanes/videos", episode_trigger=lambda e: True)
         env.unwrapped.set_record_video_wrapper(env)
         env.configure({"simulation_frequency": config["simulation_frequency"]})  # Higher FPS for rendering
         # load the trained bv_model
@@ -87,6 +91,6 @@ if __name__ == '__main__':
         BV_Agent = RainbowDQN(env=env, memory_size=config["buffer_size"], batch_size=config["batch_size"],
                               target_update=config["update_per_frame"], obs_dim=state_dim, action_dim=action_dim)
         # load the pretrained bv model
-        BV_Agent.load(model_name=Ego, frame=args.loading_frame)
+        BV_Agent.load(model_name=Ego, frame=args.loading_frame, lane_count=args.lane_count)
         print("******* Starting Testing *******")
         BV_Agent.test(ego_model=ego_model, args=args, config=config)
