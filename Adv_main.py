@@ -69,6 +69,9 @@ if __name__ == '__main__':
     action_dim = len(Bv_Action)
     train_seed = random.randint(1, 1000)
 
+    if args.train is False and args.test is False:
+        print("Include at least one of the train and test modes, please using --train or --test in the command line")
+
     # Train
     if args.train:
         log_dir = f"./AdvLogs/{Ego}-{args.lane_count}lanes"
