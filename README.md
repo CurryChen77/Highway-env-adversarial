@@ -7,14 +7,14 @@
 
 | ![Image 1](image/DQN-Ego-2lanes-brake.gif) | ![Image 2](image/DQN-Ego-2lanes-crashed.gif) |
 | :----------------------------------------: | :------------------------------------------: |
-|                   Cut in                   |             Rear-end collistion              |
+|                 Collision                  |              Rear-end collision              |
 
 
 #### 3 lanes
 
-| ![Image 1](image/DQN-Ego-3lanes-cut-in1.gif) | ![Image 2](image/DQN-Ego-3lanes-cut-in2.gif) |
-| :------------------------------------------: | :------------------------------------------: |
-|                    Cut in                    |                    Cut in                    |
+| ![Image 1](image/DQN-Ego-3lanes-cut-in.gif) | ![Image 2](image/DQN-Ego-3lanes-cut-in2.gif) |
+|:-------------------------------------------:| :------------------------------------------: |
+|                   Cut in                    |                    Cut in                    |
 
 
 ### IDM Ego
@@ -23,14 +23,14 @@
 
 | ![Image 1](image/IDM-Ego-2lanes-crashed.gif) | ![Image 2](image/IDM-Ego-2lanes-cut-in.gif) |
 | :------------------------------------------: | :-----------------------------------------: |
-|                   Crashed                    |                   Cut in                    |
+|                  Collision                   |                   Cut in                    |
 
 
 #### 3 lanes
 
-| ![Image 1](image/IDM-Ego-3lanes-cut-in.gif) | ![Image 2](image/IDM-Ego-3lanes-surroundcrash.gif) |
-| :-----------------------------------------: | :------------------------------------------------: |
-|                   Cut in                    |                      Crashed                       |
+| ![Image 1](image/IDM-Ego-3lanes-cut-in2.gif) | ![Image 2](image/IDM-Ego-3lanes-surroundcrash.gif) |
+|:--------------------------------------------:| :------------------------------------------------: |
+|                    Cut in                    |                     Collision                      |
 
 
 ## Training losses and reward
@@ -54,10 +54,17 @@
 ### 1. Install highway-adv-env
 ```
 git clone git@github.com:CurryChen77/Highway-env-adversarial.git
+```
+```
 cd Highway-env-adversarial
+```
+
+```
 python setup.py install
 ```
+
 ### 2. Install the stable-baselines3 (for the pretrained DQN Ego model) 
+
 Stable-Baselines3 requires python 3.8+ and PyTorch >= 1.13
 * windows:
 ```
@@ -74,13 +81,13 @@ python EgoAgent_trainer_DQN.py
 ### 4. Train the BV model with different Ego agent
 - DQN-Ego
 ```
-python Adv_main.py --Ego="DQN-Ego" --train
-python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3
+python Adv_main.py --Ego="DQN-Ego" --train  # defaule 2 lanes
+python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3  # 3 lanes
 ```
 - IDM-EGO
 ```
-python Adv_main.py --Ego="IDM-Ego" --train
-python Adv_main.py --Ego="IDM-Ego" --train --lane_count=3
+python Adv_main.py --Ego="IDM-Ego" --train  # defaule 2 lanes
+python Adv_main.py --Ego="IDM-Ego" --train --lane_count=3  # 3 lanes
 ```
 **default: 2 lanes**
 
@@ -91,13 +98,13 @@ Can be changed by  **--lane_count**
 
 - DQN-Ego
 ```
-python Adv_main.py --Ego="DQN-Ego" --test --render
-python Adv_main.py --Ego="DQN-Ego" --test --render --lane_count=3
+python Adv_main.py --Ego="DQN-Ego" --test --render  # defaule 2 lanes
+python Adv_main.py --Ego="DQN-Ego" --test --render --lane_count=3  # 3 lanes
 ```
 - IDM-EGO
 ```
-python Adv_main.py --Ego="IDM-Ego"  --test --render
-python Adv_main.py --Ego="IDM-Ego"  --test --render --lane_count=3
+python Adv_main.py --Ego="IDM-Ego"  --test --render  # defaule 2 lanes
+python Adv_main.py --Ego="IDM-Ego"  --test --render --lane_count=3  # 3 lanes
 ```
 **default: 2 lanes**
 
