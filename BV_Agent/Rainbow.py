@@ -2,7 +2,7 @@ import math, random
 import os
 from collections import deque
 from torch.nn.utils import clip_grad_norm_
-import gym
+
 import re
 import numpy as np
 from torch.autograd import Variable
@@ -734,7 +734,12 @@ class RainbowDQN:
     def load(self, model_name, frame=None, lane_count=2):
         # load the dqn network
         if frame is not None:
-            self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-{frame}.pth"))
+            if torch.cuda.is_available():
+                self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-{frame}.pth"))
+            else:
+                self.dqn.load_state_dict(
+                    torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-{frame}.pth",
+                               map_location=torch.device('cpu')))
             print(f"--------Successfully loading RainbowDQN-{frame}.pth--------")
         else:
             try:
@@ -742,7 +747,11 @@ class RainbowDQN:
                 matching_files = [file for file in file_names if file.startswith(f"RainbowDQN-{lane_count}lanes")]
                 matching_files.sort(key=lambda x: (int(re.split('-|.pth',x)[-2])))
                 latest_model_name = matching_files[-1]
-                self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/{latest_model_name}"))
+                if torch.cuda.is_available():
+                    self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/{latest_model_name}"))
+                else:
+                    self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/{latest_model_name}",
+                                                        map_location=torch.device('cpu')))
                 print(f"--------Successfully loading the latest model {latest_model_name}--------")
             except IndexError:
                 print("Can't find any trained model")

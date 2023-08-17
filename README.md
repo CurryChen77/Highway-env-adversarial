@@ -63,6 +63,10 @@ cd Highway-env-adversarial
 python setup.py install
 ```
 
+```
+pip install moviepy
+```
+
 ### 2. Install the stable-baselines3 (for the pretrained DQN Ego model) 
 
 [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) requires python 3.8+ and PyTorch >= 1.13
