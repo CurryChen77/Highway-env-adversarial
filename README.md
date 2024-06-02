@@ -60,11 +60,7 @@ cd Highway-env-adversarial
 ```
 
 ```
-python setup.py install
-```
-
-```
-pip install moviepy
+pip install .
 ```
 
 ### 2. Install the stable-baselines3 (for the pretrained DQN Ego model) 
