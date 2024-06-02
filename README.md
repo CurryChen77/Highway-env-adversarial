@@ -112,17 +112,10 @@ python Adv_main.py --Ego="IDM-Ego"  --test --render --lane_count=3  # 3 lanes
 Can be changed by  **--lane_count**
 
 ### 6. Open the tensorboard
+```
+tensorboard --logdir=./AdvLogs
+```
 
-- DQN as ego car
-```
-tensorboard --logdir=./AdvLogs/DQN-Ego-2lanes
-tensorboard --logdir=./AdvLogs/DQN-Ego-3lanes
-```
-- IDM as ego car
-```
-tensorboard --logdir=./AdvLogs/IDM-Ego-2lanes
-tensorboard --logdir=./AdvLogs/IDM-Ego-3lanes
-```
 ## 3. Environment: highway_env_adv
 ### 1. Initial condition of all the vehicles：
 - **`Creating type of all the vehicle`**  
