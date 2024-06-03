@@ -39,8 +39,6 @@ if __name__ == '__main__':
 
             plt.plot(rewards['Step'], smooth(rewards['Value'], sm=50), color=colors[count], label=f"{ego}-{lane}")
             count += 1
-            # 不使用平滑处理
-            # ax1.plot(len_mean['Step'], len_mean['Value'], color="red",label='all_data')
 
     plt.legend()
     plt.xlabel("Episode")
