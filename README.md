@@ -35,19 +35,7 @@
 
 ## Training losses and reward
 
-### DQN Ego
-
-| ![Image 1](image/DQN-Ego-2lanes-10000-losses.png) | ![Image 2](image/DQN-Ego-3lanes-10000-losses.png) |
-| :-----------------------------------------------: | :-----------------------------------------------: |
-|                 2 lanes scenario                  |                 3 lanes scenario                  |
-
-
-### IDM Ego
-
-| ![Image 1](image/IDM-Ego-2lanes-10000-losses-1692067702752-4.png) | ![Image 2](image/IDM-Ego-3lanes-10000-losses.png) |
-| :----------------------------------------------------------: | :-----------------------------------------------: |
-|                       2 lanes scenario                       |                 3 lanes scenario                  |
-
+<img src="AdvLogs/Learning_Curve.png" alt="Reward Image" style="zoom: 50%;" />
 
 ## 2. Usage
 

@@ -79,11 +79,11 @@ if __name__ == '__main__':
         writer = SummaryWriter(log_dir=log_dir)
         BV_Agent = RainbowDQN(env=env, memory_size=config["buffer_size"], batch_size=config["batch_size"],
                               target_update=config["update_per_frame"], obs_dim=state_dim,
-                              action_dim=action_dim, seed=train_seed)
+                              action_dim=action_dim, lr=config["learning_rate"], num_frames=config["max_train_frame"],
+                              seed=train_seed)
 
         print("******* Starting Training *******")
-        BV_Agent.train(num_frames=config["max_train_frame"],
-                       ego_model=ego_model, writer=writer, args=args, config=config)
+        BV_Agent.train(ego_model=ego_model, writer=writer, args=args, config=config)
 
     # Test
     if args.test:

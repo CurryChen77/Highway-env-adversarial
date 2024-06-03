@@ -84,7 +84,7 @@ class HighwayEnvAdv(HighwayEnv):
         else:
             # the ego car is MDPVehicle
             vehicle = self.action_type.vehicle_class(self.road, vehicle.position, vehicle.heading, vehicle.speed)
-            self.action_type.controlled_vehicle = vehicle # set the ego vehicle as the controlled vehicle in action type
+            self.action_type.controlled_vehicle = vehicle  # set the ego vehicle as the controlled vehicle in action type
         self.controlled_vehicles.append(vehicle)  # contain the ego and the selected bv for observation
         self.road.vehicles.append(vehicle)
 
@@ -183,6 +183,7 @@ class HighwayEnvAdv(HighwayEnv):
         return reward
 
     def bv_reward(self, bv_action):
+        # punish the collision with other BVs (not Ego)
         bv_collision_reward = float(self.controlled_vehicles[1].crashed)  # whether the selected bv has crashed
         # bv_forward_speed = self.controlled_vehicles[1].speed * np.cos(self.controlled_vehicles[1].heading) * -1
         bv_rewards = bv_collision_reward

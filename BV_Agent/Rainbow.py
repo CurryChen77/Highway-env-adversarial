@@ -1,6 +1,7 @@
 import math, random
 import os
 from collections import deque
+from tqdm import tqdm
 from torch.nn.utils import clip_grad_norm_
 
 import re
@@ -415,6 +416,8 @@ class RainbowDQN:
             target_update: int,
             obs_dim: int,
             action_dim: int,
+            lr: float = 1e-3,
+            num_frames: int = 1e4,
             seed: int = 777,
             gamma: float = 0.99,
             # PER parameters
@@ -451,13 +454,16 @@ class RainbowDQN:
         self.target_update = target_update
         self.seed = seed
         self.gamma = gamma
+        self.lr = lr
+        self.num_frames = num_frames
+
         # NoisyNet: All attributes related to epsilon are removed
 
         # device: cpu / gpu
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
         )
-        print("Using device: ",self.device)
+        print("Using device: ", self.device)
 
         # PER
         # memory for 1-step Learning
@@ -494,7 +500,7 @@ class RainbowDQN:
         self.dqn_target.eval()
 
         # optimizer
-        self.optimizer = optim.Adam(self.dqn.parameters())
+        self.optimizer = optim.Adam(self.dqn.parameters(), lr=self.lr)
 
         # transition to store in memory
         self.transition = list()
@@ -519,7 +525,7 @@ class RainbowDQN:
         """Take an action and return the response of the env."""
         next_state, reward, terminated, truncated, _ = self.env.step(action)
         done = terminated or truncated
-        bv_reward = (-1. * reward) + 1
+        bv_reward = (-1. * reward) + 1  # bv_reward range [0, 1]
         former_obs = next_state[0]  # the obs from the unchanged selected bv
         updated_obs = next_state[1]  # the obs from updated selected bv
 
@@ -582,17 +588,23 @@ class RainbowDQN:
 
         return loss.item()
 
-    def train(self,num_frames, ego_model, writer, args, config, print_interval=100):
+    def lr_decay(self, frame):
+        lr_now = self.lr * (1 - frame / self.num_frames)
+        for p in self.optimizer.param_groups:
+            p['lr'] = lr_now
+
+    def train(self, ego_model, writer, args, config):
         """Train the agent."""
         self.is_test = False
 
         state, _ = self.env.reset(seed=self.seed)
         update_cnt = 0
         losses = []
-        scores = []
         score = 0
+        episode_cnt = 0
+        step_count = 0
 
-        for frame_idx in range(1, num_frames + 1):
+        for frame_idx in tqdm(range(1, self.num_frames + 1)):
             if ego_model is not None:
                 ego_action = ego_model.predict(state[0], deterministic=True)[0]  # the first obs is the ego obs
             else:
@@ -606,31 +618,31 @@ class RainbowDQN:
 
             state = next_state
             score += reward
+            step_count += 1
 
             # NoisyNet: removed decrease of epsilon
 
             # PER: increase beta
-            fraction = min(frame_idx / num_frames, 1.0)
+            fraction = min(frame_idx / self.num_frames, 1.0)
             self.beta = self.beta + fraction * (1.0 - self.beta)
-
-            writer.add_scalar("Reward", (score), frame_idx)
 
             # if episode ends
             if done:
                 state, _ = self.env.reset(seed=self.seed)
-                scores.append(score)
+                episode_cnt += 1
+                writer.add_scalar("Mean Reward per step", score/step_count, episode_cnt)
                 score = 0
+                step_count = 0
 
             if args.render:
                 self.env.render()
 
             # if training is ready
             if len(self.memory) >= self.batch_size:
+                self.lr_decay(frame_idx)
                 loss = self.update_model()
                 losses.append(loss)
                 writer.add_scalar("Loss", loss, frame_idx)
-                if frame_idx % print_interval == 0:
-                    print(f"Frame: {frame_idx + 1}, Reward: {score:.2f}, Loss: {loss}")
 
                 update_cnt += 1
 
@@ -640,7 +652,6 @@ class RainbowDQN:
 
             if frame_idx % config["saving_model_per_frame"] == 0 and frame_idx != 0:
                 self.save(args=args, frame=frame_idx)
-
 
         writer.close()
         self.env.close()
@@ -728,8 +739,8 @@ class RainbowDQN:
     def save(self, args, frame):
         os.makedirs(f"./BV_model/{args.Ego}", exist_ok=True)
         # save the parameters
-        torch.save(self.dqn.state_dict(), f"./BV_model/{args.Ego}/RainbowDQN-{args.lane_count}lanes-{frame}.pth")
-        print("Successfully saving the model")
+        save_dir = f"./BV_model/{args.Ego}/RainbowDQN-{args.lane_count}lanes-{frame}.pth"
+        torch.save(self.dqn.state_dict(), save_dir)
 
     def load(self, model_name, frame=None, lane_count=2):
         # load the dqn network

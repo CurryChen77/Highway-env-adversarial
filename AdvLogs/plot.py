@@ -1,44 +1,49 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import matplotlib.font_manager as font_manager
+from matplotlib import colormaps
 
 
-def tensorboard_smoothing(x, smooth=0.99):
-    x = x.copy()
-    weight = smooth
-    for i in range(1, len(x)):
-        x[i] = (x[i - 1] * weight + x[i]) / (weight + 1)
-        weight = (weight + 1) * smooth
-    return x
+def get_colors_from_cmap(cmap_name, num_colors):
+    cmap = colormaps[cmap_name]
+    return [cmap(i / (num_colors - 1)) for i in range(num_colors)]
+
+
+def smooth(data, sm=1):
+    """
+        smooth the input data
+    """
+    if sm > 1:
+        z = np.ones_like(data)
+        y = np.ones(sm) * 1.0
+        smoothed = np.convolve(y, data, "same") / np.convolve(y, z, "same")
+        return smoothed
+    else:
+        return data
 
 
 if __name__ == '__main__':
     Ego_type = ["DQN-Ego", "IDM-Ego"]
     Lanes_type = ["2lanes", "3lanes"]
+    font_props = font_manager.FontProperties(family='Times New Roman', size=12)
+    colors = get_colors_from_cmap('viridis', len(Ego_type)*len(Lanes_type))
+    count = 0
+
+    plt.figure()
     for ego in Ego_type:
         for lane in Lanes_type:
-            fig, ax1 = plt.subplots(1, 1)  # a figure with a 1x1 grid of Axes
-            # 设置上方和右方无框
-            ax1.spines['top'].set_visible(False)  # 不显示图表框的上边框
-            ax1.spines['right'].set_visible(False)
-            losses_mean = pd.read_csv(
-                f"./{ego}-{lane}/{ego}-{lane}-10000-losses.csv")
-            rewards = pd.read_csv(
-                f"./{ego}-{lane}/{ego}-{lane}-10000-losses.csv")
 
-            reward_mean = np.mean(rewards['Value'][:-10])
-            # 设置折线颜色，折线标签
-            # 使用平滑处理
-            ax1.plot(losses_mean['Step'], tensorboard_smoothing(losses_mean['Value'], smooth=0.6), color="red", label='losses')
+            rewards = pd.read_csv(
+                f"AdvLogs/{ego}-{lane}/run-{ego}-{lane}-tag-Mean Reward per step.csv")
+
+            plt.plot(rewards['Step'], smooth(rewards['Value'], sm=50), color=colors[count], label=f"{ego}-{lane}")
+            count += 1
             # 不使用平滑处理
             # ax1.plot(len_mean['Step'], len_mean['Value'], color="red",label='all_data')
 
-            # s设置标签位置，lower upper left right，上下和左右组合
-            plt.legend(loc='lower right')
-
-            ax1.set_xlabel("frame")
-            ax1.set_ylabel("losses")
-            ax1.set_title(f"{ego}-{lane} reward: {reward_mean:.2f}")
-            plt.show()
-            # 保存图片，也可以是其他格式，如pdf
-            fig.savefig(fname=f"{ego}-{lane}-10000-losses" + '.png', format='png')
+    plt.legend()
+    plt.xlabel("Episode")
+    plt.ylabel("Mean Reward")
+    plt.savefig("AdvLogs/Learning_Curve.png", dpi=400)
+    plt.show()
