@@ -61,7 +61,7 @@ def plot_data(datas, min_step_len, save_dir, tag):
 
     for prefix, data_list in datas.items():
         combined_data = []
-        sm = min_step_len // 10
+        sm = min_step_len // 20
         for steps, values in data_list:
             smooth_values = smooth(values, sm=sm)
             df = pd.DataFrame({'step': steps, 'smoothed_value': smooth_values})
@@ -76,7 +76,7 @@ def plot_data(datas, min_step_len, save_dir, tag):
             ax=ax,
             label=prefix,
             estimator='mean',
-            errorbar=('ci', 95),
+            errorbar=('ci', 90),
             err_kws={"alpha": 0.2, "linewidth": 0.1}
         )
 

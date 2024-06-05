@@ -35,7 +35,7 @@
 
 ## Training reward
 
-<img src="AdvLogs/Learning_Curve.png" alt="Reward Image" style="zoom: 50%;" />
+<img src="image/Mean Reward.png" alt="Reward Image" style="zoom: 40%;" />
 
 ## 2. Usage
 
@@ -102,6 +102,11 @@ Can be changed by  **--lane_count**
 ### 6. Open the tensorboard
 ```
 tensorboard --logdir=AdvLogs
+```
+
+### 7. Plot training reward
+```
+python plot.py
 ```
 
 ## 3. Environment: highway_env_adv
