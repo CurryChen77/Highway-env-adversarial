@@ -1,21 +1,27 @@
 # -*-coding: utf-8 -*-
-# tesing
 import argparse
 import random
-
 import numpy as np
-import gymnasium as gym
 import torch
+import gymnasium as gym
 from gymnasium.wrappers import RecordVideo
-import torch.autograd as autograd
 from BV_Agent.Rainbow import RainbowDQN  # replay memory for rainbow dqn
 from config import Env_config, load_ego_agent, Bv_Action
-from highway_env.envs.common.action import VehicleAction
-import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
+
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)  # if you are using multi-GPU
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 if __name__ == '__main__':
@@ -24,10 +30,12 @@ if __name__ == '__main__':
     parser.add_argument('--render', action='store_true', help="whether to display during the training")
     parser.add_argument('--train', action='store_true', help="whether to train")
     parser.add_argument('--test', action='store_true', help="whether to test")
-    parser.add_argument('--saving', type=int, default=1000, help="saving per episode")
+    parser.add_argument('--train_seeds', type=int, nargs='+', default=[1, 2, 3], help="training seeds")
+    parser.add_argument('--test_seed', type=int, default=1, help="testing seed")
+    parser.add_argument('--saving', type=int, default=5e3, help="saving per episode")
     parser.add_argument('--loading_frame', type=int, default=None, help="load specific trained model")
     parser.add_argument('--lane_count', type=int, default=2, help="the lane_count of the scenario")
-    parser.add_argument('--max_train_frame', type=int, default=int(1e4), help="the maxing training frames")
+    parser.add_argument('--max_train_frame', type=int, default=int(1e3), help="the maxing training frames")
     args = parser.parse_args()
     Ego = args.Ego
     print(f"******* Using {Ego} *******")
@@ -68,33 +76,38 @@ if __name__ == '__main__':
     # Create bv model
     state_dim = 5 * 5
     action_dim = len(Bv_Action)
-    train_seed = random.randint(1, 1000)
 
     if args.train is False and args.test is False:
         print("Include at least one of the train and test modes, please using --train or --test in the command line")
 
     # Train
     if args.train:
-        log_dir = f"./AdvLogs/{Ego}-{args.lane_count}lanes"
-        writer = SummaryWriter(log_dir=log_dir)
-        BV_Agent = RainbowDQN(env=env, memory_size=config["buffer_size"], batch_size=config["batch_size"],
-                              target_update=config["update_per_frame"], obs_dim=state_dim,
-                              action_dim=action_dim, lr=config["learning_rate"], num_frames=config["max_train_frame"],
-                              seed=train_seed)
-
         print("******* Starting Training *******")
-        BV_Agent.train(ego_model=ego_model, writer=writer, args=args, config=config)
+        for seed in args.train_seeds:
+            set_seed(seed)
+            log_dir = f"./AdvLogs/{Ego}-{args.lane_count}lanes-seed{seed}"
+            writer = SummaryWriter(log_dir=log_dir)
+            BV_Agent = RainbowDQN(env=env, memory_size=config["buffer_size"], batch_size=config["batch_size"],
+                                  target_update=config["update_per_frame"], obs_dim=state_dim,
+                                  action_dim=action_dim, lr=config["learning_rate"], num_frames=config["max_train_frame"],
+                                  seed=seed)
+
+            print(f"******* Training Seed:{seed} *******")
+            BV_Agent.train(ego_model=ego_model, writer=writer, args=args, config=config)
+            writer.close()
 
     # Test
     if args.test:
         env = RecordVideo(env, video_folder=f"BV_model/{Ego}/{args.lane_count}lanes/videos", episode_trigger=lambda e: True)
         env.unwrapped.set_record_video_wrapper(env)
         env.configure({"simulation_frequency": config["simulation_frequency"]})  # Higher FPS for rendering
-        # load the trained bv_model
 
+        set_seed(args.test_seed)
+
+        # load the trained bv_model
         BV_Agent = RainbowDQN(env=env, memory_size=config["buffer_size"], batch_size=config["batch_size"],
                               target_update=config["update_per_frame"], obs_dim=state_dim, action_dim=action_dim)
         # load the pretrained bv model
-        BV_Agent.load(model_name=Ego, frame=args.loading_frame, lane_count=args.lane_count)
-        print("******* Starting Testing *******")
+        BV_Agent.load(model_name=Ego, frame=args.loading_frame, lane_count=args.lane_count, seed=args.test_seed)
+        print(f"******* Starting Testing seed{args.test_seed}*******")
         BV_Agent.test(ego_model=ego_model, args=args, config=config)

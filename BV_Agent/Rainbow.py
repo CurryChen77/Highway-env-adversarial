@@ -604,7 +604,7 @@ class RainbowDQN:
         episode_cnt = 0
         step_count = 0
 
-        for frame_idx in tqdm(range(1, self.num_frames + 1)):
+        for frame_idx in range(1, self.num_frames + 1):
             if ego_model is not None:
                 ego_action = ego_model.predict(state[0], deterministic=True)[0]  # the first obs is the ego obs
             else:
@@ -630,7 +630,7 @@ class RainbowDQN:
             if done:
                 state, _ = self.env.reset(seed=self.seed)
                 episode_cnt += 1
-                writer.add_scalar("Mean Reward per step", score/step_count, episode_cnt)
+                writer.add_scalar("Mean Reward", score/step_count, episode_cnt)
                 score = 0
                 step_count = 0
 
@@ -651,9 +651,8 @@ class RainbowDQN:
                     self._target_hard_update()
 
             if frame_idx % config["saving_model_per_frame"] == 0 and frame_idx != 0:
-                self.save(args=args, frame=frame_idx)
+                self.save(args=args, frame=frame_idx, seed=self.seed)
 
-        writer.close()
         self.env.close()
 
     def test(self, ego_model, args, config) -> None:
@@ -736,26 +735,26 @@ class RainbowDQN:
         """Hard update: target <- local."""
         self.dqn_target.load_state_dict(self.dqn.state_dict())
 
-    def save(self, args, frame):
+    def save(self, args, frame, seed):
         os.makedirs(f"./BV_model/{args.Ego}", exist_ok=True)
         # save the parameters
-        save_dir = f"./BV_model/{args.Ego}/RainbowDQN-{args.lane_count}lanes-{frame}.pth"
+        save_dir = f"./BV_model/{args.Ego}/RainbowDQN-{args.lane_count}lanes-seed{seed}-{frame}.pth"
         torch.save(self.dqn.state_dict(), save_dir)
 
-    def load(self, model_name, frame=None, lane_count=2):
+    def load(self, model_name, frame=None, lane_count=2, seed=1):
         # load the dqn network
         if frame is not None:
             if torch.cuda.is_available():
-                self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-{frame}.pth"))
+                self.dqn.load_state_dict(torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-seed{seed}-{frame}.pth"))
             else:
                 self.dqn.load_state_dict(
-                    torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-{frame}.pth",
+                    torch.load(f"./BV_model/{model_name}/RainbowDQN-{lane_count}lanes-seed{seed}-{frame}.pth",
                                map_location=torch.device('cpu')))
-            print(f"--------Successfully loading RainbowDQN-{frame}.pth--------")
+            print(f"--------Successfully loading RainbowDQN-seed{seed}-{frame}.pth--------")
         else:
             try:
                 file_names = os.listdir(f"./BV_model/{model_name}/")
-                matching_files = [file for file in file_names if file.startswith(f"RainbowDQN-{lane_count}lanes")]
+                matching_files = [file for file in file_names if file.startswith(f"RainbowDQN-{lane_count}lanes-seed{seed}")]
                 matching_files.sort(key=lambda x: (int(re.split('-|.pth',x)[-2])))
                 latest_model_name = matching_files[-1]
                 if torch.cuda.is_available():
