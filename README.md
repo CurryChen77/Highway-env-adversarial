@@ -33,7 +33,7 @@
 |            Emergency lane change             |           Surrounding vehicle collision            |
 
 
-## Training losses and reward
+## Training reward
 
 <img src="AdvLogs/Learning_Curve.png" alt="Reward Image" style="zoom: 50%;" />
 
@@ -101,7 +101,7 @@ Can be changed by  **--lane_count**
 
 ### 6. Open the tensorboard
 ```
-tensorboard --logdir=./AdvLogs
+tensorboard --logdir=AdvLogs
 ```
 
 ## 3. Environment: highway_env_adv
