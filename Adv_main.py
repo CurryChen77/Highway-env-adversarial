@@ -25,8 +25,9 @@ def set_seed(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def train_process(seed, config):
+def train_process(seed, config, args):
     Ego = config['Ego']
+    lane_count = config['lane_count']
     set_seed(seed)
     # load the trained ego agent
     if Ego == "DQN-Ego":
@@ -53,7 +54,7 @@ def train_process(seed, config):
         "simulation_frequency": config["simulation_frequency"]
     })
 
-    log_dir = f"./AdvLogs/{Ego}-{args.lane_count}lanes-seed{seed}"
+    log_dir = f"./AdvLogs/{Ego}-{lane_count}lanes-seed{seed}"
     writer = SummaryWriter(log_dir=log_dir)
     BV_Agent = RainbowDQN(env=env, memory_size=config["buffer_size"], batch_size=config["batch_size"],
                           target_update=config["update_per_frame"], obs_dim=config["state_dim"],
@@ -99,7 +100,7 @@ if __name__ == '__main__':
 
         processes = []
         for seed in args.train_seeds:
-            p = Process(target=train_process, args=(seed, config))
+            p = Process(target=train_process, args=(seed, config, args))
             processes.append(p)
             p.start()
 
