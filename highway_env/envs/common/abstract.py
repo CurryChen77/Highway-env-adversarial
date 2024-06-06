@@ -67,6 +67,9 @@ class AbstractEnv(gym.Env):
         self.render_mode = render_mode
         self.enable_auto_render = False
 
+        # CBV
+        self.bv_changed = False
+
         self.reset()
 
     @property
@@ -241,18 +244,21 @@ class AbstractEnv(gym.Env):
         else:
             ego_action = action
         # the obs of the former selected bv
-        previous_obs = self.observation_type.observe()
-        if type(action) == VehicleAction:
-            # update the selected bv and get corresponding obs
-            self.update_obs()
-            updated_obs = self.observation_type.observe()
-            obs = [previous_obs, updated_obs]
-        else:
-            obs = previous_obs
+        unchanged_obs = self.observation_type.observe()
         reward = self._reward(action)  # if no bv then only the ego action, else got both ego and bv action
         terminated = self._is_terminated()
         truncated = self._is_truncated()
-        info = self._info(obs, ego_action)  # need ego action to get the info
+        info = self._info(unchanged_obs, ego_action)  # need ego action to get the info
+
+        # check whether need to update CBV if so, update the obs for the new cbv for next transition
+        if type(action) == VehicleAction:
+            # update the selected bv and get corresponding obs
+            self.update_obs()  # the obs of the new CBV may be the same as before or has changed
+            updated_obs = self.observation_type.observe()
+            obs = [unchanged_obs, updated_obs]
+        else:
+            obs = unchanged_obs
+
         if self.render_mode == 'human':
             self.render()
 

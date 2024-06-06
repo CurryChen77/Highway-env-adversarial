@@ -43,6 +43,9 @@ class ObservationType(object):
     def observer_vehicle(self, vehicle):
         self.__observer_vehicle = vehicle
 
+    def update_ego(self, param):
+        pass
+
 
 class GrayscaleObservation(ObservationType):
 
@@ -238,6 +241,51 @@ class KinematicObservation(ObservationType):
             self.env.np_random.shuffle(obs[1:])
         # Flatten
         return obs.astype(self.space().dtype)
+
+
+class CbvKinematicObservation(KinematicObservation):
+    def observe(self) -> np.ndarray:
+        if not self.env.road:
+            return np.zeros(self.space().shape)
+
+        # Add cbv-vehicle
+        df = pd.DataFrame.from_records([self.observer_vehicle.to_dict(self.observer_vehicle)])
+        ego_df = pd.DataFrame.from_records([self.ego.to_dict(self.observer_vehicle)])
+        df = pd.concat([df, ego_df], ignore_index=True)
+        # Add nearby traffic
+        close_vehicles = self.env.road.close_objects_to(self.observer_vehicle,
+                                                        self.env.PERCEPTION_DISTANCE,
+                                                        count=self.vehicles_count - 2,
+                                                        see_behind=self.see_behind,
+                                                        sort=self.order == "sorted",
+                                                        vehicles_only=not self.include_obstacles)
+        if close_vehicles:
+            origin = self.observer_vehicle if not self.absolute else None
+            vehicles_df = pd.DataFrame.from_records(
+                [v.to_dict(origin, observe_intentions=self.observe_intentions)
+                 for v in close_vehicles[-self.vehicles_count + 2:]])
+            df = pd.concat([df, vehicles_df], ignore_index=True)
+
+        df = df[self.features]
+
+        # Normalize and clip
+        if self.normalize:
+            df = self.normalize_obs(df)
+        # Fill missing rows
+        if df.shape[0] < self.vehicles_count:
+            rows = np.zeros((self.vehicles_count - df.shape[0], len(self.features)))
+            df = pd.concat([df, pd.DataFrame(data=rows, columns=self.features)], ignore_index=True)
+        # Reorder
+        df = df[self.features]
+        obs = df.values.copy()
+        if self.order == "shuffled":
+            self.env.np_random.shuffle(obs[1:])
+        # Flatten
+        return obs.astype(self.space().dtype)
+    
+    def update_ego(self, ego):
+        self.ego = ego
+    
 
 
 class OccupancyGridObservation(ObservationType):
@@ -484,12 +532,13 @@ class MultiAgentObservation(ObservationType):
         super().__init__(env)
         self.observation_config = observation_config
         self.agents_observation_types = []
-        for vehicle in self.env.controlled_vehicles:
+        for i, vehicle in enumerate(self.env.controlled_vehicles):
             # the generation order of agent_observation_type follow the same order of self.env.controlled_vehicle
             # the first vehicle appended is the ego vehicle, and the rest vehicles are the bvs
-            obs_type = observation_factory(self.env, self.observation_config)
+            obs_type = observation_factory(self.env, self.observation_config[i])
             obs_type.observer_vehicle = vehicle
             self.agents_observation_types.append(obs_type)
+        self.agents_observation_types[1].update_ego(self.env.controlled_vehicles[0])
 
     def space(self) -> spaces.Space:
         return spaces.Tuple([obs_type.space() for obs_type in self.agents_observation_types])
@@ -639,6 +688,8 @@ def observation_factory(env: 'AbstractEnv', config: dict) -> ObservationType:
         return TimeToCollisionObservation(env, **config)
     elif config["type"] == "Kinematics":
         return KinematicObservation(env, **config)
+    elif config["type"] == "CbvKinematicObservation":
+        return CbvKinematicObservation(env, **config)
     elif config["type"] == "OccupancyGrid":
         return OccupancyGridObservation(env, **config)
     elif config["type"] == "KinematicsGoal":

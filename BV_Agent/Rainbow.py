@@ -523,14 +523,16 @@ class RainbowDQN:
 
     def step(self, action):
         """Take an action and return the response of the env."""
-        next_state, reward, terminated, truncated, _ = self.env.step(action)
-        done = terminated or truncated
-        bv_reward = (-1. * reward) + 1  # bv_reward range [0, 1]
+        next_state, reward, terminated, truncated, info = self.env.step(action)
+        env_done = terminated or truncated
+        transition_done = info["CBV_crashed"] or self.env.bv_changed or env_done
+        # the obs contains both for the unchanged CBV and also updated CBV
         former_obs = next_state[0]  # the obs from the unchanged selected bv
         updated_obs = next_state[1]  # the obs from updated selected bv
 
         if not self.is_test:
-            self.transition += [bv_reward, former_obs[1].reshape(-1, self.state_dim), done]
+            # each obs contains ego's obs and CBV's obs
+            self.transition += [reward, former_obs[1].reshape(-1, self.state_dim), transition_done]
 
             # N-step transition
             if self.use_n_step:
@@ -543,7 +545,7 @@ class RainbowDQN:
             if one_step_transition:
                 self.memory.store(*one_step_transition)
 
-        return updated_obs, bv_reward, done
+        return updated_obs, reward, env_done
 
     def update_model(self) -> torch.Tensor:
         """Update the model by gradient descent."""

@@ -83,7 +83,7 @@ def plot_data(datas, min_step_len, save_dir, tag):
     ax.set_title("Training Progress", fontname="Times New Roman", fontsize=16)
     ax.set_xlabel("Episode", fontname="Times New Roman", fontsize=16)
     ax.set_ylabel(str(tag), fontname="Times New Roman", fontsize=16)
-    plt.legend()
+    plt.legend(loc="lower right")
     path = os.path.join(save_dir, f'{tag}.png')
     plt.savefig(path, dpi=400)
     plt.show()

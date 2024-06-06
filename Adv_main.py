@@ -38,9 +38,9 @@ def train_process(seed, config):
     env.configure({
         "observation": {
             "type": "MultiAgentObservation",  # get the observation from all the controlled vehicle (ego and bvs)
-            "observation_config": {
-                "type": "Kinematics",  # each vehicle on the road will return its own obs, with their own state in the first row
-            }
+            "observation_config": [
+                {"type": "Kinematics"}, {"type": "CbvKinematicObservation"},  # ego obs type and CBV obs type
+            ]
         },
         "ego_type": config["ego_type"],
         "lanes_count": config["lane_count"],  # the number of the lane
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--test', action='store_true', help="whether to test")
     parser.add_argument('--train_seeds', type=int, nargs='+', default=[1, 2, 3], help="training seeds")
     parser.add_argument('--test_seed', type=int, default=1, help="testing seed")
-    parser.add_argument('--saving', type=int, default=5e3, help="saving per episode")
+    parser.add_argument('--saving', type=int, default=1e4, help="saving per episode")
     parser.add_argument('--loading_frame', type=int, default=None, help="load specific trained model")
     parser.add_argument('--lane_count', type=int, default=2, help="the lane_count of the scenario")
     parser.add_argument('--max_train_frame', type=int, default=int(1e4), help="the maxing training frames")
@@ -114,9 +114,9 @@ if __name__ == '__main__':
         env.configure({
             "observation": {
                 "type": "MultiAgentObservation",  # get the observation from all the controlled vehicle (ego and bvs)
-                "observation_config": {
-                    "type": "Kinematics",  # each vehicle on the road will return its own obs, with their own state in the first row
-                }
+                "observation_config": [
+                    {"type": "Kinematics"}, {"type": "CbvKinematicObservation"},  # ego obs type and CBV obs type
+                ]
             },
             "ego_type": config["ego_type"],
             "lanes_count": config["lane_count"],  # the number of the lane
