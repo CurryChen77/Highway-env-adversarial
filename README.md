@@ -63,57 +63,24 @@ pip install stable-baselines3[extra]
 ```
 pip install "stable-baselines3[extra]"
 ```
-### 3. (Optional) Train your own DQN ego agent
+### 3. (Optional) Train your own ego agent
+*use --ego_type to specify the Ego model (DQN, A2C, PPO)*
 ```
-python EgoAgent_trainer_DQN.py
+python Ego_Agent/Trainer.py --train --ego_type DQN
 ```
-### 4. Train the BV model with different Ego agents
-- DQN-Ego
+### 4. Train the CBV model with different Ego agents
+*use --Ego to specify the Ego model used in CBV Training(DQN-ego A2C-ego, PPO-ego)*
 ```
 python Adv_main.py --Ego="DQN-Ego" --train  # defaule 2 lanes
 python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3  # 3 lanes
 ```
-- A2C-Ego
-```
-python Adv_main.py --Ego="A2C-Ego" --train  # defaule 2 lanes
-python Adv_main.py --Ego="A2C-Ego" --train --lane_count=3  # 3 lanes
-```
-- PPO-Ego
-```
-python Adv_main.py --Ego="PPO-Ego" --train  # defaule 2 lanes
-python Adv_main.py --Ego="PPO-Ego" --train --lane_count=3  # 3 lanes
-```
-- IDM-EGO
-```
-python Adv_main.py --Ego="IDM-Ego" --train  # defaule 2 lanes
-python Adv_main.py --Ego="IDM-Ego" --train --lane_count=3  # 3 lanes
-```
 **default: 2 lanes**
-
-Can be changed by  **--lane_count**
-
-
+Can be changed by **--lane_count**
 ### 5. Test the BV model and render
-
-- DQN-Ego
+*use --Ego to specify the Ego model used in CBV Testing(DQN-ego A2C-ego, PPO-ego)*
 ```
 python Adv_main.py --Ego="DQN-Ego" --test --render  # defaule 2 lanes
 python Adv_main.py --Ego="DQN-Ego" --test --render --lane_count=3  # 3 lanes
-```
-- A2C-Ego
-```
-python Adv_main.py --Ego="A2C-Ego" --test --render  # defaule 2 lanes
-python Adv_main.py --Ego="A2C-Ego" --test --render --lane_count=3  # 3 lanes
-```
-- PPO-Ego
-```
-python Adv_main.py --Ego="PPO-Ego" --test --render  # defaule 2 lanes
-python Adv_main.py --Ego="PPO-Ego" --test --render --lane_count=3  # 3 lanes
-```
-- IDM-EGO
-```
-python Adv_main.py --Ego="IDM-Ego"  --test --render  # defaule 2 lanes
-python Adv_main.py --Ego="IDM-Ego"  --test --render --lane_count=3  # 3 lanes
 ```
 **default: 2 lanes**
 

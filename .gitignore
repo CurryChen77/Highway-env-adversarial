@@ -10,8 +10,6 @@ highway_dqn/videos
 # Setup
 **.egg*
 
-**.pth
-
 # Jupyter notebooks
 **.ipynb_checkpoints*
 
