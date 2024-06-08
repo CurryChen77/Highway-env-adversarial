@@ -64,12 +64,12 @@ pip install stable-baselines3[extra]
 pip install "stable-baselines3[extra]"
 ```
 ### 3. (Optional) Train your own ego agent
-*use --ego_type to specify the Ego model (DQN, A2C, PPO)*
+--ego_type (DQN, A2C, PPO)
 ```
 python Ego_Agent/Trainer.py --train --ego_type DQN
 ```
 ### 4. Train the CBV model with different Ego agents
-*use --Ego to specify the Ego model used in CBV Training(DQN-ego A2C-ego, PPO-ego)*
+--Ego (DQN-ego A2C-ego, PPO-ego)
 ```
 python Adv_main.py --Ego="DQN-Ego" --train  # defaule 2 lanes
 python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3  # 3 lanes
@@ -77,14 +77,14 @@ python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3  # 3 lanes
 **default: 2 lanes**
 Can be changed by **--lane_count**
 ### 5. Test the BV model and render
-*use --Ego to specify the Ego model used in CBV Testing(DQN-ego A2C-ego, PPO-ego)*
+--Ego (DQN-Ego A2C-Ego, PPO-Ego)
 ```
 python Adv_main.py --Ego="DQN-Ego" --test --render  # defaule 2 lanes
 python Adv_main.py --Ego="DQN-Ego" --test --render --lane_count=3  # 3 lanes
 ```
 **default: 2 lanes**
 
-Can be changed by  **--lane_count**
+Can be changed by **--lane_count**
 
 ### 6. Open the tensorboard
 ```
