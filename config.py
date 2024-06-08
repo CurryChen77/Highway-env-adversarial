@@ -1,4 +1,4 @@
-from stable_baselines3 import DQN
+from stable_baselines3 import DQN, A2C, PPO
 
 
 Bv_Action = {
@@ -33,7 +33,17 @@ def Env_config(Ego_model_name):
     }
     if Ego_model_name == "DQN-Ego":
         config.update({
-            "Ego_model_path": "highway_dqn/model",
+            "Ego_model_path": "Ego_Agent/Ego_Agent_model/DQN/model",
+            "ego_type": None
+        })
+    elif Ego_model_name == "A2C-Ego":
+        config.update({
+            "Ego_model_path": "Ego_Agent/Ego_Agent_model/A2C/model",
+            "ego_type": None
+        })
+    elif Ego_model_name == "PPO-Ego":
+        config.update({
+            "Ego_model_path": "Ego_Agent/Ego_Agent_model/PPO/model",
             "ego_type": None
         })
     elif Ego_model_name == "IDM-Ego":
@@ -43,6 +53,13 @@ def Env_config(Ego_model_name):
     return config
 
 
-def load_ego_agent(ego_model_path, env=None):
-    Ego = DQN.load(path=ego_model_path, env=env)
+def load_ego_agent(ego_name, ego_model_path, env=None):
+    if ego_name == "DQN-Ego":
+        Ego = DQN.load(path=ego_model_path, env=env)
+    elif ego_name == "A2C-Ego":
+        Ego = A2C.load(path=ego_model_path, env=env)
+    elif ego_name == "PPO-Ego":
+        Ego = PPO.load(path=ego_model_path, env=env)
+    else:
+        Ego = None
     return Ego

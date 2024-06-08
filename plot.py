@@ -61,7 +61,7 @@ def plot_data(datas, min_step_len, save_dir, tag):
 
     for prefix, data_list in datas.items():
         combined_data = []
-        sm = min_step_len // 20
+        sm = min_step_len // 10
         for steps, values in data_list:
             smooth_values = smooth(values, sm=sm)
             df = pd.DataFrame({'step': steps, 'smoothed_value': smooth_values})

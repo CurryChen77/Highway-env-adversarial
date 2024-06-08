@@ -69,6 +69,7 @@ class AbstractEnv(gym.Env):
 
         # CBV
         self.bv_changed = False
+        self.bv_action = None
 
         self.reset()
 
