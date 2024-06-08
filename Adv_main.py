@@ -29,10 +29,7 @@ def train_process(seed, config):
     Ego = config['Ego']
     set_seed(seed)
     # load the trained ego agent
-    if Ego == "DQN-Ego":
-        ego_model = load_ego_agent(ego_model_path=config["Ego_model_path"])  # env can be None if only need prediction from a trained model
-    else:
-        ego_model = None
+    ego_model = load_ego_agent(ego_name=Ego, ego_model_path=config["Ego_model_path"])  # env can be None if only need prediction from a trained model
 
     env = gym.make(config["env_type"], render_mode="rgb_array")
     env.configure({
@@ -66,7 +63,7 @@ def train_process(seed, config):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Time Retract RL')
-    parser.add_argument('--Ego', type=str, default="DQN-Ego", help="the name of Ego model")
+    parser.add_argument('--Ego', type=str, default="DQN-Ego", choices=["DQN-Ego", "A2C-Ego", "PPO-Ego", "IDM-Ego"], help="the name of Ego model")
     parser.add_argument('--render', action='store_true', help="whether to display during the training")
     parser.add_argument('--train', action='store_true', help="whether to train")
     parser.add_argument('--test', action='store_true', help="whether to test")
@@ -131,11 +128,7 @@ if __name__ == '__main__':
         obs, info = env.reset()
 
         # load the trained ego agent
-        if Ego == "DQN-Ego":
-            ego_model = load_ego_agent(ego_model_path=config["Ego_model_path"])  # env can be None if only need prediction from a trained model
-            print("Successfully load the trained DQN ego agent")
-        else:
-            ego_model = None
+        ego_model = load_ego_agent(ego_name=Ego, ego_model_path=config["Ego_model_path"])  # env can be None if only need prediction from a trained model
         env = RecordVideo(env, video_folder=f"BV_model/{Ego}/{args.lane_count}lanes/videos", episode_trigger=lambda e: True)
         env.unwrapped.set_record_video_wrapper(env)
         env.configure({"simulation_frequency": config["simulation_frequency"]})  # Higher FPS for rendering

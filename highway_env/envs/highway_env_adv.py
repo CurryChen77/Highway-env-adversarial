@@ -202,15 +202,15 @@ class HighwayEnvAdv(HighwayEnv):
         else:
             bv_collision_rewards = 0
 
-        CBV = self.controlled_vehicles[1]
-        neighbours = self.road.network.all_side_lanes(CBV.lane_index)
-        lane = CBV.target_lane_index[2] if isinstance(CBV, ControlledVehicle) \
-            else CBV.lane_index[2]
-
-        # right_lane_reward = lane / max(len(neighbours) - 1, 1)
+        # frequent lane change punishment
+        lane_change_reward = 0.0
+        if self.bv_action:
+            if (self.bv_action == int(0) and bv_action == int(2)) or (self.bv_action == int(2) and bv_action == int(1)):
+                lane_change_reward = 0.5
+        self.bv_action = bv_action
 
         # final bv reward
-        bv_rewards = bv_collision_rewards
+        bv_rewards = bv_collision_rewards - lane_change_reward
 
         return bv_rewards
 

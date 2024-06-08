@@ -1,15 +1,17 @@
 import argparse
 import gymnasium as gym
 from gymnasium.wrappers import RecordVideo
-from stable_baselines3 import DQN, PPO
+from stable_baselines3 import DQN, PPO, A2C
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
+
 
 def get_model_class(model_name):
     model_classes = {
         "DQN": DQN,
         "PPO": PPO,
+        "A2C": A2C,
     }
     return model_classes.get(model_name)
 
@@ -68,7 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('--vehicles_count', type=int, default=20, help="vehicles_count")
     parser.add_argument('--duration', type=int, default=50, help="duration")
     parser.add_argument('--lanes_count', type=int, default=2, help="lane count")
-    parser.add_argument('--ego_type', type=str, default='PPO', help="ego_type")
+    parser.add_argument('--ego_type', type=str, default='DQN', choices=['PPO', 'DQN', 'A2C'], help="ego_type")
     args = parser.parse_args()
 
     main(args)

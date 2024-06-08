@@ -73,6 +73,16 @@ python EgoAgent_trainer_DQN.py
 python Adv_main.py --Ego="DQN-Ego" --train  # defaule 2 lanes
 python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3  # 3 lanes
 ```
+- A2C-Ego
+```
+python Adv_main.py --Ego="A2C-Ego" --train  # defaule 2 lanes
+python Adv_main.py --Ego="A2C-Ego" --train --lane_count=3  # 3 lanes
+```
+- PPO-Ego
+```
+python Adv_main.py --Ego="PPO-Ego" --train  # defaule 2 lanes
+python Adv_main.py --Ego="PPO-Ego" --train --lane_count=3  # 3 lanes
+```
 - IDM-EGO
 ```
 python Adv_main.py --Ego="IDM-Ego" --train  # defaule 2 lanes
@@ -89,6 +99,16 @@ Can be changed by  **--lane_count**
 ```
 python Adv_main.py --Ego="DQN-Ego" --test --render  # defaule 2 lanes
 python Adv_main.py --Ego="DQN-Ego" --test --render --lane_count=3  # 3 lanes
+```
+- A2C-Ego
+```
+python Adv_main.py --Ego="A2C-Ego" --test --render  # defaule 2 lanes
+python Adv_main.py --Ego="A2C-Ego" --test --render --lane_count=3  # 3 lanes
+```
+- PPO-Ego
+```
+python Adv_main.py --Ego="PPO-Ego" --test --render  # defaule 2 lanes
+python Adv_main.py --Ego="PPO-Ego" --test --render --lane_count=3  # 3 lanes
 ```
 - IDM-EGO
 ```
