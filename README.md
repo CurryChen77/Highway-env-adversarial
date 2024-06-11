@@ -77,10 +77,10 @@ python Adv_main.py --Ego="DQN-Ego" --train --lane_count=3  # 3 lanes
 **default: 2 lanes**
 Can be changed by **--lane_count**
 ### 5. Test the BV model and render
---Ego (DQN-Ego A2C-Ego, PPO-Ego)
+--Ego (IDM-Ego, DQN-Ego A2C-Ego, PPO-Ego)
 ```
-python Adv_main.py --Ego="DQN-Ego" --test --render  # defaule 2 lanes
-python Adv_main.py --Ego="DQN-Ego" --test --render --lane_count=3  # 3 lanes
+python Adv_main.py --Ego="IDM-Ego" --test --render  # defaule 2 lanes
+python Adv_main.py --Ego="IDM-Ego" --test --render --lane_count=3  # 3 lanes
 ```
 **default: 2 lanes**
 

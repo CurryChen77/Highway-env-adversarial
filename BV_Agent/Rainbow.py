@@ -683,7 +683,7 @@ class RainbowDQN:
                 if args.render:
                     self.env.render()
 
-            print("score: ", score)
+            print(f"Episode: {episode} score: {score}")
         self.env.close()
 
     def _compute_dqn_loss(self, samples: Dict[str, np.ndarray], gamma: float) -> torch.Tensor:

@@ -130,9 +130,10 @@ if __name__ == '__main__':
 
         # load the trained ego agent
         ego_model = load_ego_agent(ego_name=Ego, ego_model_path=config["Ego_model_path"])  # env can be None if only need prediction from a trained model
-        env = RecordVideo(env, video_folder=f"BV_model/{Ego}/{args.lane_count}lanes/videos", episode_trigger=lambda e: True)
-        env.unwrapped.set_record_video_wrapper(env)
-        env.configure({"simulation_frequency": config["simulation_frequency"]})  # Higher FPS for rendering
+        if args.render:
+            env = RecordVideo(env, video_folder=f"BV_model/{Ego}/{args.lane_count}lanes/videos", episode_trigger=lambda e: True)
+            env.unwrapped.set_record_video_wrapper(env)
+            env.configure({"simulation_frequency": config["simulation_frequency"]})  # Higher FPS for rendering
 
         set_seed(args.test_seed)
 

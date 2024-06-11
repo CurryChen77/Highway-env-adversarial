@@ -48,12 +48,13 @@ def Env_config(Ego_model_name):
         })
     elif Ego_model_name == "IDM-Ego":
         config.update({
+            "Ego_model_path": None,
             "ego_type": "highway_env.vehicle.behavior.AggressiveVehicle"
         })
     return config
 
 
-def load_ego_agent(ego_name, ego_model_path, env=None):
+def load_ego_agent(ego_name, ego_model_path=None, env=None):
     if ego_name == "DQN-Ego":
         Ego = DQN.load(path=ego_model_path, env=env)
     elif ego_name == "A2C-Ego":
