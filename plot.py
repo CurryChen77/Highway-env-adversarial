@@ -80,7 +80,7 @@ def plot_data(datas, min_step_len, save_dir, tag):
             err_kws={"alpha": 0.2, "linewidth": 0.1}
         )
 
-    ax.set_title("Training Progress", fontname="Times New Roman", fontsize=16)
+    ax.set_title("RainbowDQN (CBV) Training Progress", fontname="Times New Roman", fontsize=16)
     ax.set_xlabel("Episode", fontname="Times New Roman", fontsize=16)
     ax.set_ylabel(str(tag), fontname="Times New Roman", fontsize=16)
     plt.legend(loc="lower right")
